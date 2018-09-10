@@ -4,3 +4,6 @@
 
 ## Blog posts
 - Blackfire.io, April 2018: [Road to Blackfire.io presentation: organising the meetup](https://blog.blackfire.io/vienna-php-meetup-blackfire-talk.html)
+
+## Talks
+- RIPE SEE 1, September 2011: [Starting An Internet Exchange Point: Lessons learnt](https://meduza.carnet.hr/index.php/media/watch/6294)
