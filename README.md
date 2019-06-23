@@ -6,6 +6,8 @@
 
 ## Blog posts
 - Blackfire.io, April 2018: [Road to Blackfire.io presentation: organising the meetup](https://blog.blackfire.io/vienna-php-meetup-blackfire-talk.html)
+- March 2019: [Microservices in Go](https://medium.com/propertyfinder-engineering/microservices-at-property-finder-ac471b60ddb6)
+- June 2019: [Analysing global CDN Performance](https://medium.com/propertyfinder-engineering/analysing-global-cdn-performance-f800e4d5e86b)
 
 ## Talks
 - RIPE SEE 1, September 2011: [Starting An Internet Exchange Point: Lessons learnt](https://meduza.carnet.hr/index.php/media/watch/6294)
