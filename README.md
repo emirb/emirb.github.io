@@ -17,3 +17,6 @@
 - RIPE SEE 8, April 2019: [Importance of Local Content](https://www.youtube.com/watch?v=bPAJffkUyVE)
 - RIPE SEE 8, April 2019: [Analysing Global CDN Performance using RIPE Atlas](https://www.youtube.com/watch?v=zDm8uv8kER8)
 - Google Next '21, October 2021: [How Booking.com uses Apigee on Anthos to enhance the customer's experience](https://www.youtube.com/watch?v=C86s6peyyQs)
+
+## Projects
+- gitdelivr.net - CDN for public Git repos: [gitdelivr.net](https://gitdelivr.net/)
