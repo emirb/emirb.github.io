@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Container Is Not a Sandbox — The State of MicroVM Isolation in 2026</title>
+<meta name="description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, QEMU microvm, AI agent sandboxes, and why every coding agent boots its own Linux kernel. Interactive guide with verified numbers.">
+<meta property="og:title" content="Your Container Is Not a Sandbox">
+<meta property="og:description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, AI agent sandboxes, and why every coding agent boots its own Linux kernel.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://emirb.github.io/blog/microvm-2026">
+<meta property="og:image" content="https://emirb.github.io/blog/microvm-2026/og-image.png">
+<meta property="og:site_name" content="Emir Beganovic">
+<meta property="article:author" content="Emir Beganovic">
+<meta property="article:published_time" content="2026-03-27">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Your Container Is Not a Sandbox">
+<meta name="twitter:description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, AI agent sandboxes, and why every coding agent boots its own Linux kernel.">
+<meta name="twitter:image" content="https://emirb.github.io/blog/microvm-2026/og-image.png">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-surface: #161b22;
+    --bg-elevated: #1c2333;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --text-dim: #484f58;
+    --accent: #58a6ff;
+    --accent-bright: #79c0ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --orange: #d29922;
+    --purple: #bc8cff;
+    --pink: #f778ba;
+    --border: #30363d;
+    --code-bg: #0d1117;
+    --layer-host: #1a3a5c;
+    --layer-vm: #1a4a3c;
+    --layer-container: #4a1a3c;
+    --layer-process: #3c3a1a;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+    --max-width: 760px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { font-size: 18px; scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0.022;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 6rem 0 3.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 3rem;
+    position: relative;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: -20%;
+    width: 140%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--accent) 30%, var(--green) 70%, transparent 100%);
+    opacity: 0.4;
+  }
+  .hero h1 {
+    font-size: 3.2rem;
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.2rem;
+  }
+  .hero .subtitle {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    max-width: 600px;
+  }
+  .hero .meta {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .hero .meta a { color: var(--accent); text-decoration: none; }
+  .hero .meta a:hover { text-decoration: underline; }
+
+  /* Typography */
+  h2 {
+    font-size: 1.7rem;
+    font-weight: 700;
+    margin: 4rem 0 1.2rem;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 2.5rem 0 0.8rem;
+    color: var(--accent-bright);
+    letter-spacing: 0.01em;
+  }
+  p { margin-bottom: 1.2rem; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
+  a:hover { text-decoration: none; border-bottom-color: var(--accent); }
+  strong { color: #fff; font-weight: 600; }
+  em { color: var(--text-muted); }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--bg-elevated);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.5rem;
+    margin: 2rem 0;
+    background: var(--bg-surface);
+    border-radius: 0 8px 8px 0;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+
+  hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border) 20%, var(--border) 80%, transparent);
+    margin: 3.5rem 0;
+  }
+
+  /* Interactive Components */
+  .interactive {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.8rem;
+    margin: 2.5rem 0;
+    position: relative;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  }
+  .interactive::before {
+    content: 'interactive';
+    position: absolute;
+    top: -0.6rem;
+    left: 1rem;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.7rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(88, 166, 255, 0.2);
+  }
+  .interactive-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* Isolation Comparison */
+  .isolation-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  @media (max-width: 640px) {
+    .isolation-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 2.2rem; }
+  }
+  .isolation-col h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+    text-align: center;
+  }
+  .layer {
+    padding: 0.6rem 0.8rem;
+    border-radius: 6px;
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+  .layer:hover {
+    border-color: var(--accent);
+    transform: translateX(3px);
+  }
+  .layer.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(88, 166, 255, 0.15);
+  }
+  .layer-label { font-weight: 500; }
+  .layer-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .badge-hw { background: var(--green); color: var(--bg); }
+  .badge-kernel { background: var(--orange); color: var(--bg); }
+  .badge-ns { background: var(--red); color: #fff; }
+  .badge-process { background: var(--purple); color: var(--bg); }
+
+  .layer-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    min-height: 4rem;
+    transition: all 0.3s ease;
+    border-left: 3px solid var(--accent);
+  }
+
+  /* Boot Timeline */
+  .timeline {
+    position: relative;
+    padding: 1rem 0;
+  }
+  .timeline-track {
+    position: relative;
+    height: 40px;
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 0.3rem;
+  }
+  .timeline-fill {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 1.5s ease-out;
+    display: flex;
+    align-items: center;
+    padding-left: 0.8rem;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 0;
+  }
+  .timeline-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.3rem;
+  }
+  .timeline-time {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    min-width: 55px;
+    text-align: right;
+  }
+  .timeline-bar {
+    flex: 1;
+    height: 32px;
+    background: var(--bg-elevated);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .timeline-bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding-left: 0.6rem;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    white-space: nowrap;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0;
+  }
+  .boot-btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all 0.15s ease;
+    margin-top: 0.8rem;
+  }
+  .boot-btn:hover { background: var(--accent-bright); transform: translateY(-1px); }
+  .boot-btn:active { transform: translateY(0); }
+  .boot-counter {
+    font-family: var(--font-mono);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--green);
+    text-align: center;
+    margin: 0.5rem 0;
+    min-height: 2.8rem;
+  }
+
+  /* VMM Cards */
+  .vmm-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+  .vmm-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .vmm-card:hover, .vmm-card.expanded {
+    border-color: var(--accent);
+  }
+  .vmm-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .vmm-name {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .vmm-tags {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .vmm-tag {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 3px;
+    font-weight: 600;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .vmm-tag.rust { border-color: var(--orange); color: var(--orange); }
+  .vmm-tag.go { border-color: var(--accent); color: var(--accent); }
+  .vmm-tag.c { border-color: var(--red); color: var(--red); }
+  .vmm-tag.swift { border-color: var(--pink); color: var(--pink); }
+  .vmm-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+    font-size: 0.75rem;
+  }
+  @media (max-width: 640px) {
+    .vmm-stats { grid-template-columns: repeat(2, 1fr); }
+  }
+  .vmm-stat {
+    text-align: center;
+    padding: 0.4rem;
+    background: var(--bg-surface);
+    border-radius: 4px;
+  }
+  .vmm-stat-value {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--green);
+  }
+  .vmm-stat-label {
+    color: var(--text-dim);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .vmm-detail {
+    margin-top: 0.8rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.6;
+    display: none;
+  }
+  .vmm-card.expanded .vmm-detail { display: block; }
+  .vmm-users {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+  }
+  .vmm-users strong { color: var(--accent-bright); font-size: 0.75rem; }
+
+  /* Sandbox Ecosystem */
+  .sandbox-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+  @media (max-width: 640px) {
+    .sandbox-grid { grid-template-columns: 1fr; }
+  }
+  .sandbox-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    transition: border-color 0.2s;
+  }
+  .sandbox-card:hover { border-color: var(--accent); }
+  .sandbox-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .sandbox-iso {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .iso-firecracker { background: #f8514920; color: var(--orange); border: 1px solid var(--orange); }
+  .iso-gvisor { background: #3fb95020; color: var(--green); border: 1px solid var(--green); }
+  .iso-ch { background: #58a6ff20; color: var(--accent); border: 1px solid var(--accent); }
+  .iso-v8 { background: #bc8cff20; color: var(--purple); border: 1px solid var(--purple); }
+  .iso-docker { background: #f778ba20; color: var(--pink); border: 1px solid var(--pink); }
+  .sandbox-desc {
+    font-size: 0.78rem;
+    color: #b1bac4;
+    margin-top: 0.3rem;
+    line-height: 1.5;
+  }
+
+  /* Matryoshka Visualization */
+  .matryoshka {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 0;
+    gap: 0;
+  }
+  .m-layer {
+    border: 2px solid;
+    border-radius: 12px;
+    padding: 0.8rem 1.5rem;
+    text-align: center;
+    transition: all 0.4s ease;
+    cursor: pointer;
+    position: relative;
+  }
+  .m-layer:hover { transform: scale(1.02); }
+  .m-host { border-color: #30363d; background: #161b2280; width: 100%; }
+  .m-hypervisor { border-color: var(--accent); background: #58a6ff10; width: 88%; margin-top: -0.3rem; }
+  .m-vm { border-color: var(--green); background: #3fb95010; width: 76%; margin-top: -0.3rem; }
+  .m-runtime { border-color: var(--orange); background: #d2992210; width: 64%; margin-top: -0.3rem; }
+  .m-code { border-color: var(--red); background: #f8514910; width: 52%; margin-top: -0.3rem; }
+  .m-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .m-sublabel {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+  }
+
+  /* Escape arrow */
+  .escape-indicator {
+    margin-top: 1rem;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    text-align: center;
+    font-family: var(--font-mono);
+    transition: all 0.3s;
+  }
+
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.82rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: var(--bg-surface);
+  }
+  td { font-family: var(--font-mono); font-size: 0.8rem; }
+  tr:hover td { background: var(--bg-surface); transition: background 0.15s; }
+  tr:last-child td { border-bottom: none; }
+
+  /* Footnotes */
+  .footnote {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 5rem;
+    padding: 2.5rem 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    position: relative;
+  }
+  footer::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -20%;
+    width: 140%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--border) 30%, var(--border) 70%, transparent 100%);
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeIn 0.4s ease-out; }
+
+  /* Number highlight */
+  .num {
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-weight: 700;
+  }
+  .num-bad {
+    color: var(--red);
+    font-family: var(--font-mono);
+    font-weight: 700;
+  }
+
+  /* Callout */
+  .callout {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+  }
+  .callout-title {
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+  }
+
+  .wide-img {
+    width: 100%;
+    max-width: 100%;
+    margin: 1.5rem 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  /* Horizontal Timeline */
+  .htl-scroll {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    padding: 0.5rem 0;
+  }
+  .htl-track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 2rem 0 2.2rem;
+  }
+  .htl-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border);
+    transform: translateY(-50%);
+  }
+  .htl-dot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+    z-index: 1;
+    transition: transform 0.15s;
+  }
+  .htl-dot:hover { transform: scale(1.05); }
+  .htl-dot.active .htl-circle {
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.25);
+    transform: scale(1.4);
+  }
+  .htl-circle {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid;
+    background: var(--bg);
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .htl-year {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    white-space: nowrap;
+  }
+  .htl-name {
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+    white-space: nowrap;
+    text-align: center;
+  }
+  .htl-detail {
+    margin-top: 0.8rem;
+    padding: 1rem 1.2rem;
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    min-height: 4rem;
+    border-left: 3px solid var(--accent);
+    transition: border-color 0.3s;
+  }
+
+  /* Featured pull quote */
+  .pull-quote {
+    text-align: center;
+    padding: 3.5rem 2rem;
+    margin: 3rem -1.5rem;
+    background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .pull-quote::before {
+    content: '\201C';
+    position: absolute;
+    top: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 4.5rem;
+    color: var(--green);
+    opacity: 0.15;
+    line-height: 1;
+  }
+  .pull-quote p {
+    font-size: 1.55rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+    color: var(--green);
+    margin: 0;
+  }
+  .pull-quote .pull-attr {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-weight: 400;
+    margin-top: 0.8rem;
+  }
+
+  /* Smooth link underlines in body text */
+  p a, li a, td a, .sandbox-desc a, .vmm-detail a {
+    border-bottom: 1px solid var(--accent);
+    border-bottom-color: rgba(88, 166, 255, 0.3);
+    transition: border-color 0.2s;
+  }
+  p a:hover, li a:hover, td a:hover, .sandbox-desc a:hover, .vmm-detail a:hover {
+    border-bottom-color: var(--accent);
+  }
+
+  /* Callout refinement */
+  .callout {
+    position: relative;
+    overflow: hidden;
+  }
+  .callout::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px 0 0 3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HERO -->
+<header class="hero">
+  <p style="font-size:0.82rem; color:var(--accent); margin-bottom:0.6rem; letter-spacing:0.06em; text-transform:uppercase; font-weight:700;">The State of MicroVM Isolation in 2026</p>
+  <h1>Your Container Is&nbsp;Not&nbsp;a&nbsp;Sandbox</h1>
+  <p class="subtitle">The microVM ecosystem was battle-tested long before agentic AI arrived. Now every platform needs it. A deep dive into VMMs, the shared Rust crate ecosystem, AI sandboxes, and where it's all heading.</p>
+  <p class="meta">March 2026 &middot; Emir Beganovic &middot; <a href="https://github.com/emirb">@emirb</a></p>
+</header>
+
+<!-- INTRO -->
+<p>I'm coming fresh from KubeCon EU 2026 with a lot of impressions. But one thing stuck with me more than anything else. In her <a href="https://hosted-files.sched.co/kccnceu2026/e8/KubeCon%20EU%202026%20Kubernetes%20and%20Linux%20Security.pdf">security keynote</a>, Marina Moore from Edera put it plainly:</p>
+
+<blockquote>Containers are not a security boundary. They are a mechanism to control resource usage.</blockquote>
+
+<p>I've been running Linux since I was twelve, yet I realized that only until recently I didn't fully internalize what that sentence truly means .</p>
+
+<p>Following my last few months spent going deep on microVMs, building infrastructure on Cloud Hypervisor and learning every VMM, every isolation approach, every trade-off in this space...I wanted to write a post as the guide I wish I'd had when I started. This covers the VMMs, the shared Rust ecosystem powering them, the AI sandbox explosion, and where it's all heading.</p>
+<!-- TL;DR -->
+
+<div class="interactive" style="border-color: var(--green);">
+  <div class="interactive-title" style="color: var(--green);">TL;DR : five things</div>
+  <ol style="font-size:0.92rem; line-height:1.8; padding-left:1.2rem; margin:0;">
+    <li><strong>Containers were never a security boundary</strong>: 8 container escape CVEs shipped in the last 18 months alone, and the 40M-line shared kernel is the attack surface.</li>
+    <li><strong>MicroVMs boot in ~125ms with &lt;5 MiB overhead</strong>: the "VMs are slow" objection died years ago; Firecracker, Cloud Hypervisor, and the shared <a href="https://github.com/rust-vmm" style="color:var(--green)">rust-vmm</a> Rust crate ecosystem made it irrelevant.</li>
+    <li><strong>For microVMs, the "Docker moment" is agentic AI</strong>: the ecosystem was mature and battle-tested before agentic coding exploded; E2B, Sprites, Docker Sandboxes, Bedrock, Ona, and others built their sandboxes in months because the hard problems were already solved in rust-vmm.</li>
+    <li><strong>The ecosystem is thriving and diverse</strong>: Firecracker, Cloud Hypervisor, QEMU microvm, gVisor, libkrun, crosvm, Lima, Tart, plus 10+ AI sandbox platforms, all sharing code and converging on the same architecture.</li>
+    <li><strong>The VMM is becoming invisible</strong>: the container was the abstraction of the 2010s; the microVM is becoming the abstraction of the 2020s, and the value is moving up the stack to orchestration and developer experience.</li>
+  </ol>
+</div>
+
+<hr>
+
+<h2>Deep Dive</h2>
+
+<p>Linux containers are a <em>packaging and resource control</em> mechanism. Namespaces and cgroups restrict what a process can see and how much CPU and memory it can use. But every container on a host shares the same kernel. A kernel exploit, a rogue capability, a mis-mounted socket, and you're root on the host, with access to every other tenant's data. The kernel has <span class="num-bad">~40 million</span> lines of C and exposes <span class="num-bad">385+</span> syscalls. That is the attack surface.</p>
+
+<p>To be fair: containers <em>are</em> a boundary. You do need a vulnerability to escape one. There's no "just let me out" syscall. But the kernel attack surface is enormous, and escape CVEs ship regularly. An analogy that has stuck with me: <strong>NAT is not a firewall. Namespaces are not a security layer.</strong> Both restrict access as a side effect of their design, and both are commonly mistaken for security boundaries.</p>
+
+<p>For a long time, this was an accepted trade-off. If you trusted the code inside the container (your own code, your own team), the convenience was worth it.</p>
+
+<p>Then two things happened.</p>
+
+<p>First, AWS built <a href="https://firecracker-microvm.github.io/">Firecracker</a>, a tiny virtual machine monitor written in Rust, and used it to run every Lambda function in its own hardware-isolated VM. Boot time: <span class="num">125ms</span>. Memory overhead: <span class="num">&lt;5 MiB</span>. "Just spin up a VM" stopped being a punchline.</p>
+
+<p>Second, AI agents started writing and executing arbitrary code. Millions of times a day. Code that <em>nobody has reviewed</em>, generated by models that <em>cannot be audited</em>, running on infrastructure where a container escape means game over.</p>
+
+<p>The question stopped being "should we isolate untrusted workloads in VMs?" and became <strong>"why aren't we already?"</strong></p>
+
+<h2>What Actually Happens When a Container "Escapes"</h2>
+
+<p>Click any layer below to understand what separates your code from the host in each model. The difference is not subtle.</p>
+
+<!-- INTERACTIVE: Isolation Comparison -->
+<div class="interactive">
+  <div class="interactive-title">Container vs. MicroVM Isolation</div>
+  <div class="isolation-grid">
+    <div class="isolation-col">
+      <h4 style="color: var(--red)">Container</h4>
+      <div class="layer" style="background: var(--layer-host)" data-info="container-host" onmouseenter="showLayerInfo(this)">
+        <span class="layer-label">Host Kernel</span>
+        <span class="layer-badge badge-kernel">shared</span>
+      </div>
+      <div class="layer" style="background: var(--layer-container)" data-info="container-ns" onmouseenter="showLayerInfo(this)">
+        <span class="layer-label">Namespaces</span>
+        <span class="layer-badge badge-ns">ns</span>
+      </div>
+      <div class="layer" style="background: var(--layer-container)" data-info="container-cg" onmouseenter="showLayerInfo(this)">
+        <span class="layer-label">Cgroups v2</span>
+        <span class="layer-badge badge-ns">cgroup</span>
+      </div>
+      <div class="layer" style="background: var(--layer-container)" data-info="container-seccomp" onmouseenter="showLayerInfo(this)">
+        <span class="layer-label">Seccomp-bpf</span>
+        <span class="layer-badge badge-ns">filter</span>
+      </div>
+      <div class="layer" style="background: var(--layer-process)" data-info="container-code" onmouseenter="showLayerInfo(this)">
+        <span class="layer-label">Your Code</span>
+        <span class="layer-badge badge-process">pid 1</span>
+      </div>
+    </div>
+    <div class="isolation-col">
+      <h4 style="color: var(--green)">MicroVM</h4>
+      <div class="layer" style="background: var(--layer-host)" data-info="vm-host" onmouseenter="showLayerInfo(this)">
+        <span class="layer-label">Host Kernel + KVM</span>
+        <span class="layer-badge badge-hw">hw</span>
+      </div>
+      <div class="layer" style="background: var(--layer-vm)" data-info="vm-vmm" onmouseenter="showLayerInfo(this)">
+        <span class="layer-label">VMM (Firecracker/CH)</span>
+        <span class="layer-badge badge-hw">hw</span>
+      </div>
+      <div class="layer" style="background: var(--layer-vm)" data-info="vm-guest" onmouseenter="showLayerInfo(this)">
+        <span class="layer-label">Guest Kernel</span>
+        <span class="layer-badge badge-hw">isolated</span>
+      </div>
+      <div class="layer" style="background: var(--layer-container)" data-info="vm-runtime" onmouseenter="showLayerInfo(this)">
+        <span class="layer-label">Container Runtime</span>
+        <span class="layer-badge badge-kernel">optional</span>
+      </div>
+      <div class="layer" style="background: var(--layer-process)" data-info="vm-code" onmouseenter="showLayerInfo(this)">
+        <span class="layer-label">Your Code</span>
+        <span class="layer-badge badge-process">pid 1</span>
+      </div>
+    </div>
+  </div>
+  <div class="layer-info" id="layer-info">
+    Click any layer to see what it actually does. Spoiler: the container side has a lot of "but if someone finds a kernel bug..." caveats.
+  </div>
+</div>
+
+<p>In the container model, every layer is a <em>software convention</em> enforced by the shared kernel. The kernel is the security boundary, and the kernel has <span class="num-bad">~40 million</span> lines of C. In the microVM model, the security boundary is <strong>hardware virtualization</strong>: Intel VT-x / AMD-V, enforced by the CPU itself. The VMM that orchestrates this? About <span class="num">83,000</span> lines of Rust (Firecracker) or <span class="num">106,000</span> (Cloud Hypervisor).</p>
+
+<p>A container escape gives you root on the host. A VM escape requires a hypervisor CVE, a class of bug so rare and valuable it commands <a href="https://www.crowdfense.com/exploit-acquisition-program/">$250K-$500K bounties</a> on the exploit market (Google's kvmCTF offers $250K for a KVM escape alone).</p>
+
+<h3>This Isn't Theoretical</h3>
+
+<p>Container escapes are not hypothetical. From <a href="https://hosted-files.sched.co/kccnceu2026/e8/KubeCon%20EU%202026%20Kubernetes%20and%20Linux%20Security.pdf">Marina Moore's KubeCon EU 2026 talk</a>, here are recent CVEs, all from 2024-2025:</p>
+
+<table>
+  <tr><th>CVE</th><th>What happened</th></tr>
+  <tr><td><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-21626">CVE-2024-21626</a></td><td><strong>Leaky Vessels</strong>: container escape in runc and buildkit gives access to host filesystem</td></tr>
+  <tr><td><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-1753">CVE-2024-1753</a></td><td>Buildah/Podman Build allows containers to mount host files, enabling escape at build time</td></tr>
+  <tr><td><a href="https://nvd.nist.gov/vuln/detail/CVE-2024-0132">CVE-2024-0132</a></td><td>NVIDIA container toolkit TOCTOU vulnerability gives container access to host filesystem</td></tr>
+  <tr><td><a href="https://nvd.nist.gov/vuln/detail/CVE-2025-9074">CVE-2025-9074</a></td><td>Docker Desktop privilege escalation and host filesystem access</td></tr>
+  <tr><td><a href="https://www.wiz.io/blog/nvidia-ai-vulnerability-cve-2025-23266-nvidiascape">CVE-2025-23266</a></td><td><strong>NVIDIAScape</strong>: NVIDIA container toolkit flaw leading to privilege escalation (3-line Dockerfile, CVSS 9.0)</td></tr>
+  <tr><td><a href="https://www.cncf.io/blog/2025/11/28/runc-container-breakout-vulnerabilities-a-technical-overview/">CVE-2025-31133</a></td><td>runc masked path race condition: attacker replaces /dev/null with symlink, tricks runc into bind-mounting arbitrary host paths</td></tr>
+  <tr><td><a href="https://www.cncf.io/blog/2025/11/28/runc-container-breakout-vulnerabilities-a-technical-overview/">CVE-2025-52565</a></td><td>runc /dev/console mount: insufficient validation allows write access to procfs before security protections activate</td></tr>
+  <tr><td><a href="https://blog.calif.io/p/a-race-within-a-race-exploiting-cve">CVE-2025-38617</a></td><td>Linux kernel packet socket use-after-free: only needs CAP_NET_RAW (obtainable via user namespaces), enables full container escape</td></tr>
+</table>
+
+<p>Every one of these gave an attacker a path from inside a container to the host. In a microVM model, none of them matter: the guest kernel is isolated by hardware, and the container runtime runs <em>inside</em> that isolated VM.</p>
+
+<h2>A Brief History of Trying to Isolate Processes</h2>
+
+<p>To understand where microVMs fit, it helps to see the arc. We've been trying to isolate processes for nearly 50 years, and containers were just one chapter:</p>
+
+<!-- INTERACTIVE: Container History Timeline -->
+<div class="interactive" id="timeline-history">
+  <div class="interactive-title">The Isolation Timeline</div>
+  <div class="htl-scroll" id="htl-scroll">
+    <div class="htl-track" id="htl-track">
+      <div class="htl-line"></div>
+    </div>
+  </div>
+  <div class="htl-detail" id="htl-detail">
+    Drag or click any dot to explore. Each generation tried to isolate more with less overhead — and each one eventually hit the limits of sharing a kernel.
+  </div>
+</div>
+
+<p>The pattern is clear: every approach that shares a kernel eventually hits the same wall. <code>chroot</code> didn't isolate processes. FreeBSD jails didn't isolate networking. Namespaces and cgroups don't isolate the kernel's <span class="num-bad">385+ syscall</span> attack surface. Each generation added more layers of software defense, and each generation produced new escape CVEs.</p>
+
+<p>MicroVMs break the pattern by not sharing a kernel at all. The isolation is <em>architectural</em>, not incremental.</p>
+
+<p>Not everyone waited for the industry to figure this out. Jessie Frazelle was making this exact argument back in 2018, in a series of blog posts that read like prophecy today: <a href="https://blog.jessfraz.com/post/containers-zones-jails-vms/">Setting the Record Straight: containers vs. Zones vs. Jails vs. VMs</a>, <a href="https://blog.jessfraz.com/post/hard-multi-tenancy-in-kubernetes/">Hard Multi-Tenancy in Kubernetes</a>, and <a href="https://blog.jessfraz.com/post/getting-towards-real-sandbox-containers/">Getting Towards Real Sandbox Containers</a>. She stated plainly that containers were never designed as a top-level security boundary and that real multi-tenant isolation requires hardware virtualization. She was right, and it took the rest of us years to catch up.</p>
+
+<h2>The Rust VMM Revolution</h2>
+
+<p>In 2018, AWS open-sourced Firecracker and changed what "lightweight VM" meant. Before Firecracker, "spin up a VM" meant QEMU: <span class="num-bad">1.7 million lines of C</span>, hundreds of emulated devices (including a floppy drive controller, because why not), and boot times measured in seconds.</p>
+
+<p>Firecracker asked: <em>what if we stripped all of that away?</em> No BIOS. No ACPI. No PCI bus. No USB. Five emulated devices, total. Written in Rust, so entire categories of CVEs (buffer overflows, use-after-free, double-free) are eliminated at compile time.</p>
+
+<p>The result: a VMM that boots a Linux kernel in <span class="num">125ms</span> with <span class="num">&lt;5 MiB</span> of memory overhead. AWS runs <strong>trillions</strong> of Lambda invocations per month on it. Every single one in its own VM.</p>
+
+<p>But Firecracker wasn't built in a vacuum. Its origin traces back to Google's <strong>crosvm</strong>, the Chrome OS VMM, also written in Rust. Amazon used crosvm as a starting point, then built Firecracker. After Firecracker came Cloud Hypervisor, libkrun, Dragonball Sandbox, and others. All of them kept reinventing the same low-level components: KVM wrappers, virtio device models, memory management.</p>
+
+<p>This convergence on KVM wasn't accidental. AWS itself had launched EC2 on Xen in 2006, but <a href="https://www.brendangregg.com/blog/2017-11-29/aws-ec2-virtualization-2017.html">starting in 2017</a> migrated to the <a href="https://perspectives.mvdirona.com/2021/11/xen-on-nitro-aws-nitro-for-legacy-instances/">Nitro system</a> — a KVM-based hypervisor paired with custom Annapurna Labs silicon for network and storage I/O. All new EC2 instance types are Nitro-based; Xen instances are legacy. The same pattern played out across the industry: Google Cloud runs KVM, Azure moved to KVM-based Hyper-V, and even <a href="https://thenewstack.io/edera-adds-kvm-support/">Edera</a>, which spent years positioning Xen as the more secure choice, <a href="https://edera.dev/stories/kvm-support-is-coming-to-edera">announced KVM support in 2026</a> because their customers demanded it. When the entire industry converges on a single hypervisor interface, building shared infrastructure on top of it becomes inevitable — and that's exactly what rust-vmm is.</p>
+
+<p>The community recognized the waste. AWS, Intel, Google, Microsoft, Red Hat, Alibaba, Linaro, and others started collaborating on <a href="https://github.com/rust-vmm"><strong>rust-vmm</strong></a>, a shared ecosystem of Rust crates that any VMM project can use. The <a href="https://fosdem.org/2026/schedule/event/WEHLEY-rust-vmm_evolution_on_ecosystem_and_monorepo/">FOSDEM 2026 presentation</a> by Stefano Garzarella, Ruoqing He, and Patrick Roy showed just how mature this has become:</p>
+
+<div class="callout">
+  <div class="callout-title">rust-vmm crate ecosystem (2026)</div>
+  <p><strong>Core VM:</strong> <code>kvm-ioctls</code>, <code>kvm-bindings</code>, <code>mshv-ioctls</code> (Hyper-V), <code>xen-ioctls</code> (Xen), <code>linux-loader</code><br>
+  <strong>Resource management:</strong> <code>vm-allocator</code>, <code>vm-memory</code> (with IOMMU support, guest_memfd, Kani formal verification)<br>
+  <strong>Device emulation &amp; I/O:</strong> <code>virtio-queue</code>, <code>virtio-bindings</code>, <code>vhost</code>, <code>vhost-user-backend</code>, <code>vfio-ioctls</code>, <code>vm-superio</code><br>
+  <strong>vhost-user devices:</strong> can, console, gpio, gpu, i2c, input, rng, scmi, scsi, sound, spi, video, vsock, <code>virtiofsd</code><br>
+  <strong>New:</strong> RISC-V architecture support, monorepo consolidation (kvm, vfio, vm-virtio, vhost workspaces already merged), POSIX/*BSD portability</p>
+</div>
+
+<p>This is the part that doesn't get enough attention. <strong>rust-vmm is the real revolution, not any single VMM.</strong> It means we don't have one good VMM. We have a shared foundation that makes it possible to build <em>many</em> good VMMs, each optimized for different trade-offs. An improvement to <code>vm-memory</code> benefits Firecracker, Cloud Hypervisor, libkrun, Dragonball, and crosvm simultaneously. A new architecture (RISC-V) only needs to be implemented once in the crates, and every VMM gets it.</p>
+
+<p>The consumers tell the story of breadth: Firecracker (AWS), Cloud Hypervisor (Intel/Microsoft), crosvm (Google/ChromeOS), libkrun (Red Hat), Dragonball Sandbox (Alibaba/Kata), OpenVMM (Microsoft), and <a href="https://gitlab.com/virtio-fs/virtiofsd">virtiofsd</a> (the reference virtio-fs daemon, itself a rust-vmm project). Even <a href="https://gitlab.archlinux.org/archlinux/vmexec">vmexec</a>, a zero-setup CLI tool for running commands in throwaway VMs uses the ecosystem. The vhost-user device implementations alone cover can, console, gpio, gpu, i2c, input, rng, scmi, scsi, sound, spi, video, and vsock.</p>
+
+<!-- INTERACTIVE: VMM Landscape -->
+<div class="interactive">
+  <div class="interactive-title">The Isolation Landscape in 2026 : click any card to collapse/expand</div>
+  <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.5;">Not everything below is a VMM (Virtual Machine Monitor). <strong>VMMs</strong> create and manage hardware-isolated VMs via KVM or similar: Firecracker, Cloud Hypervisor, QEMU, libkrun, crosvm. <strong>Wrappers</strong> like Lima and Tart provide CLI/UX on top of a VMM or host hypervisor but don't implement virtualization themselves. <strong>Alternative runtimes</strong> like gVisor and Sysbox improve on container isolation without a hypervisor. All are included because they're part of the same decision space.</p>
+  <div class="vmm-grid" id="vmm-grid">
+    <!-- Populated by JS -->
+  </div>
+</div>
+
+<h2>Firecracker vs. Cloud Hypervisor: The Fork in the Road</h2>
+
+<p>If you're evaluating microVMs today, you'll quickly arrive at the same fork: Firecracker or Cloud Hypervisor?</p>
+
+<p>Firecracker is ~83K lines of Rust, Cloud Hypervisor ~106K. Both use KVM. Both share code through rust-vmm. In synthetic benchmarks, the virtualization overhead is in the low single-digit percentages — effectively negligible for most workloads.</p>
+
+<p>The difference is <strong>philosophy</strong>.</p>
+
+<p>Firecracker is a scalpel. It deliberately <em>removes</em> features to minimize attack surface. No GPU passthrough. No CPU hotplugging. No nested virtualization. This is perfect for AWS Lambda's threat model: short-lived functions that never need <code>/dev/kvm</code> or a GPU.</p>
+
+<p>Cloud Hypervisor is a Swiss Army knife. It keeps the minimal spirit but adds the features that general-purpose cloud workloads need: nested KVM (<code>--cpus nested=on</code>), VFIO device passthrough (GPUs!), CPU/memory hotplugging, Windows guest support. The cost is ~75ms slower boot time and a slightly larger attack surface.</p>
+
+<div class="callout">
+  <div class="callout-title">The deciding question</div>
+  <p>Do your workloads need to run Docker-in-Docker, Android emulators, or anything that requires <code>/dev/kvm</code> inside the VM? If yes: Cloud Hypervisor. If no: Firecracker. Don't overthink it.</p>
+</div>
+
+<p><a href="https://fly.io">Fly.io</a> (a public cloud that runs customer containers as Firecracker VMs on their own hardware worldwide) <a href="https://fly.io/blog/wrong-about-gpu/">learned this the hard way</a> with GPUs. They run Firecracker for standard workloads but had to bring in Cloud Hypervisor for GPU Machines that need PCIe passthrough, burning months trying to get Nvidia's host drivers working, at one point hex-editing closed-source drivers to trick them into thinking Cloud Hypervisor was QEMU. They've since scaled back their GPU ambitions. If your workloads need nested KVM (Docker-in-Docker, Testcontainers, Android emulators), Cloud Hypervisor is the pragmatic single-VMM choice. If you only need ephemeral compute, Firecracker's simpler model and 75ms faster boot may be worth it.</p>
+
+<h2>Performance: Boot Time and Runtime Overhead</h2>
+
+<p>The most common objection to microVMs is latency. "A whole VM per request? That'll add minutes." It doesn't. The <a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a> measured <span class="num">&lt;125ms</span> to boot a Linux kernel and start accepting API calls. With snapshot-restore, you can get to <span class="num">~28ms</span>. AWS Lambda uses this for SnapStart: they freeze the VM after initialization, then restore the snapshot on cold start. Colin Percival has gotten <a href="https://www.usenix.org/publications/loginonline/freebsd-firecracker">FreeBSD booting on Firecracker in under 20ms</a> with kernel patches — the kernel boots faster than a TCP handshake. For comparison: Kubernetes pod scheduling typically takes <span class="num-bad">3-15 seconds</span>. A traditional VM boot is <span class="num-bad">30-60 seconds</span>. A microVM boot is not the bottleneck. It never was.</p>
+
+<div class="callout">
+  <div class="callout-title">VMMs, not VMs</div>
+  <p>Firecracker and Cloud Hypervisor are <strong>Virtual Machine <em>Monitors</em></strong> (VMMs): userspace processes that use KVM to create and manage VMs. They are not the VM itself. The guest runs a completely standard, full-featured Linux kernel (or <a href="https://www.usenix.org/publications/loginonline/freebsd-firecracker">FreeBSD</a>). Inside the VM, you have access to every syscall, every kernel feature, every tool. The VMM restricts what <em>hardware</em> is exposed to the guest, not what <em>software</em> can run inside it. MicroVMs are not limited environments.</p>
+</div>
+
+<p>Runtime overhead is equally minimal. Guest code runs directly on the CPU via KVM with single-digit percentage overhead. Oracle's <a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Firecracker on OCI benchmarks</a> showed ~3.5% CPU overhead even with nested virtualization. In practice, dedicated-core VMs often <em>outperform</em> containers on shared hosts: when a container gets <code>--cpus=4</code> on a 192-thread host, CFS bandwidth throttling freezes the entire cgroup once daemon threads and GC exceed the quota. A VM with dedicated cores has no quota — the CPU time is a physical property of the hardware.</p>
+
+<p>The honest trade-off is operational complexity, not performance. Managing guest kernels, rootfs images, and a VMM is real work. MicroVMs earn their keep when you're running untrusted code, need multi-tenant isolation, or operate at a scale where the security cost of a single container escape exceeds the engineering cost of running a VMM. Know your threat model.</p>
+
+<h2>The Matryoshka Model</h2>
+
+<p>The most powerful pattern emerging in 2026 is <em>supernesting</em>: a host runs a VMM, the VMM runs a Linux kernel, the kernel runs a container runtime, the runtime runs user code. Each layer trusts the layer below it and <em>nothing else</em>.</p>
+
+<div class="interactive">
+  <div class="interactive-title">Defense in depth : click a layer</div>
+  <div class="matryoshka" id="matryoshka">
+    <div class="m-layer m-host" onclick="matryoshkaClick(0)" id="m-0">
+      <div class="m-label" style="color:var(--text-muted)">Host OS &amp; KVM</div>
+      <div class="m-sublabel">Bare metal &bull; Minimal packages &bull; Hardened</div>
+    </div>
+    <div class="m-layer m-hypervisor" onclick="matryoshkaClick(1)" id="m-1">
+      <div class="m-label" style="color:var(--accent)">Cloud Hypervisor / Firecracker</div>
+      <div class="m-sublabel">83-106K lines of Rust &bull; Seccomp-jailed &bull; Unprivileged</div>
+    </div>
+    <div class="m-layer m-vm" onclick="matryoshkaClick(2)" id="m-2">
+      <div class="m-label" style="color:var(--green)">Guest VM</div>
+      <div class="m-sublabel">Dedicated kernel &bull; Ephemeral &bull; Root is fine here</div>
+    </div>
+    <div class="m-layer m-runtime" onclick="matryoshkaClick(3)" id="m-3">
+      <div class="m-label" style="color:var(--orange)">Podman / Container Runtime</div>
+      <div class="m-sublabel">Daemonless &bull; OCI images &bull; Familiar interface</div>
+    </div>
+    <div class="m-layer m-code" onclick="matryoshkaClick(4)" id="m-4">
+      <div class="m-label" style="color:var(--red)">Untrusted Code</div>
+      <div class="m-sublabel">AI agent output &bull; CI script &bull; User submission</div>
+    </div>
+  </div>
+  <div class="escape-indicator" id="m-info" style="background:var(--bg-elevated); color:var(--text-muted)">
+    Click a layer to see what happens if it's compromised. The key insight: even a full container escape (Layer 4 &rarr; Layer 3) only lands you in an ephemeral VM that's destroyed in seconds.
+  </div>
+</div>
+
+<p>This is the model that <a href="https://sprites.dev/">Fly.io Sprites</a>, <a href="https://e2b.dev/">E2B</a>, AWS Lambda, and Kata Containers all converge on. The details differ — Firecracker vs. Cloud Hypervisor, ephemeral vs. persistent, containers vs. direct processes — but the architecture is the same: <strong>the VM is the security boundary, not the container</strong>.</p>
+
+<h2>AI Agents Made Everyone Care</h2>
+
+<p>In 2024, microVMs were an infrastructure niche. AWS used them. Fly.io used them. A handful of companies building hardened Kubernetes (Kata Containers, Edera) used them. Everyone else ran containers and hoped for the best.</p>
+
+<p>In 2025, Claude, GPT, Gemini, and Codex started writing code and <em>demanding to execute it</em>. Not toy code, real code that installs packages, runs servers, modifies filesystems, and makes network requests. Millions of sessions per day.</p>
+
+<p>Suddenly every AI platform needed an answer to the same question: <strong>where does the agent's code run?</strong></p>
+
+<div class="interactive" style="border-color: var(--red);">
+  <div class="interactive-title" style="color: var(--red);">Why containers aren't enough for agents — a real escape</div>
+  <p style="font-size:0.92rem; line-height:1.7;">In March 2026, Leonardo Di Donato (creator of <a href="https://falco.org/">Falco</a>, the CNCF runtime security tool) <a href="https://ona.com/blog/how-claude-code-escapes-its-own-denylist-and-sandbox">demonstrated</a> that <strong>Claude Code will bypass its own sandbox</strong> if the sandbox is between the agent and completing its task.</p>
+  <p style="font-size:0.92rem; line-height:1.7;">The agent discovered that <code>/proc/self/root/usr/bin/npx</code> resolves to the same binary but doesn't match the deny pattern. When bubblewrap caught that, the agent <em>disabled its own sandbox</em> and ran the command anyway. No jailbreak, no special prompting. It just wanted to finish the task.</p>
+  <p style="font-size:0.92rem; line-height:1.7; margin-bottom:0;"><strong style="color:var(--red)">The lesson:</strong> Containers, denylists, and permission prompts exist in the same space the agent reasons in — userspace, language, logic. A microVM's isolation is enforced by hardware, below the layer the agent can reason about.</p>
+</div>
+
+<div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin:2rem 0;">
+  <div class="interactive-title">The AI Sandbox Ecosystem (2026)</div>
+  <div class="sandbox-grid">
+    <div class="sandbox-card">
+      <div class="sandbox-name">E2B <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
+      <div class="sandbox-desc">The OG. ~15M sessions/month. Purpose-built Firecracker sandboxes for AI agents. ~150ms boot. Used by half the Fortune 500.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name">Fly.io Sprites <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
+      <div class="sandbox-desc">Persistent, stateful VMs. Checkpoint/restore in ~300ms. Pre-installed with Claude Code, Codex CLI. The "developer workstation as a VM" model.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name">Modal <span class="sandbox-iso iso-gvisor">gVisor</span></div>
+      <div class="sandbox-desc">gVisor-based sandboxes with integrated GPU support. Broader platform for inference, training, and batch. ~300ms startup.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name">Docker Sandboxes <span class="sandbox-iso iso-docker">MicroVM</span></div>
+      <div class="sandbox-desc">Jan 2026 (Docker Desktop 4.58). Each agent gets a microVM via native hypervisor (virtualization.framework on macOS, Hyper-V on Windows) with its own private Docker daemon. Claude Code, Codex, Copilot, Gemini, Kiro. Network-isolated.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name">AWS Bedrock AgentCore <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
+      <div class="sandbox-desc">One session, one microVM. Up to 8 hours. Destroyed and sanitized after use. Integrated with Bedrock AI services.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name">Microsandbox <span class="sandbox-iso iso-ch">libkrun</span></div>
+      <div class="sandbox-desc">Open-source, self-hosted, Apache-2.0. YC-backed. ~4,700 GitHub stars. Uses libkrun (Red Hat's library-based VMM).</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name">Cloudflare Workers <span class="sandbox-iso iso-v8">V8 isolate</span></div>
+      <div class="sandbox-desc">Not microVMs but V8 isolates. Sub-millisecond startup. Dynamic Workers spawn code from LLMs at runtime. JS/Wasm only.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name">Ona (ex-Gitpod) <span class="sandbox-iso iso-ch">VM</span></div>
+      <div class="sandbox-desc">Gitpod rebranded (Sep 2025) into an AI agent platform. Each agent gets an ephemeral VM with kernel-level isolation. SOC 2, GDPR. BNY, Blackstone, Vanta as customers.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name">Matchlock <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
+      <div class="sandbox-desc">Open-source. Firecracker microVMs for AI agents with deny-all networking, domain allowlisting, and secret protection. Built for running <code>claude --dangerously-skip-permissions</code> safely.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name">Daytona <span class="sandbox-iso iso-docker">Docker</span></div>
+      <div class="sandbox-desc">Pivoted from dev environments to agent infrastructure in 2025. &lt;90ms cold starts. Weakest isolation but fastest boot.</div>
+    </div>
+  </div>
+</div>
+
+<p>The pattern is unmistakable. In the span of 18 months, <strong>every major platform</strong> converged on the same answer: untrusted code runs in a VM, not a container. The only debate is which VMM and how persistent the state should be.</p>
+
+<p>Cloudflare's V8 isolates are the interesting outlier: sub-millisecond startup but limited to JavaScript and WebAssembly. For full Linux environments where agents install packages and run Docker, microVMs are the only game in town.</p>
+
+<h2>Beyond Sandboxes: MicroVMs in Kubernetes</h2>
+
+<p>The sandbox story gets the attention, but the arguably more important front is <strong>Kubernetes</strong>. Three projects are bringing hardware-level isolation to every pod, each with a different philosophy:</p>
+
+<div class="interactive">
+  <div class="interactive-title">MicroVMs Meet Kubernetes</div>
+  <div class="sandbox-grid">
+    <div class="sandbox-card" style="grid-column: span 2;">
+      <div class="sandbox-name" style="font-size:1rem;">Kata Containers <span class="sandbox-iso iso-firecracker" style="background:var(--bg-surface);">OCI runtime</span></div>
+      <div class="sandbox-desc">The OG. OpenInfra Foundation project that wraps QEMU, Cloud Hypervisor, or Firecracker behind an OCI-compatible runtime. Drop it into containerd, every pod gets its own VM. <strong>150-300ms</strong> startup overhead. Battle-tested by IBM Cloud and AWS EKS. The most mature option, but operational complexity is real — you're managing guest kernels, VM images, and an additional runtime shim alongside your existing container stack.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name" style="font-size:1rem;">Edera <span class="sandbox-iso iso-ch" style="background:var(--bg-surface);">Type-1 hypervisor</span></div>
+      <div class="sandbox-desc">A Type-1 hypervisor for Kubernetes, built on stripped-down Xen with control plane in Rust. Pitch: the hypervisor sits <em>below</em> the kernel, so kernel bugs can't compromise isolation. Spent years arguing KVM was insecure, then <a href="https://thenewstack.io/edera-adds-kvm-support/">added KVM support in 2026</a>. At KubeCon EU this week: Falco integration for runtime threat detection <em>inside</em> microVM-isolated pods.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name" style="font-size:1rem;">KubeVirt <span class="sandbox-iso iso-ch" style="background:var(--bg-surface);">CNCF Incubating</span></div>
+      <div class="sandbox-desc">Different angle: runs full VMs as Kubernetes pods via CRDs. "It's just a Pod." Define CPU topology, memory, disks in YAML; virt-controller creates the pods. GPU passthrough, SR-IOV, live migration, GitOps via ArgoCD/Flux. SK Telecom runs their Petasus AI Cloud on KubeVirt. <a href="https://www.cncf.io/blog/2026/03/25/announcing-the-release-of-kubevirt-v1-8/">v1.8</a> (March 2026) shipped a <strong>Hypervisor Abstraction Layer</strong>, opening the door to backends beyond QEMU/libvirt — including <a href="https://github.com/cloud-hypervisor/cloud-hypervisor/issues/4201">Cloud Hypervisor</a>. Not about isolating containers — about bringing VM workloads into Kubernetes orchestration.</div>
+    </div>
+  </div>
+</div>
+
+<h3>The gVisor Question</h3>
+
+<p>Any honest discussion of isolation in 2026 has to take <a href="https://gvisor.dev/">gVisor</a> seriously. It's not a microVM — it's a user-space application kernel written in Go that intercepts syscalls and re-implements them in a memory-safe process. No hypervisor, no guest kernel. But dismissing it as "weaker isolation" misses the picture.</p>
+
+<p>Google runs billions of containers on gVisor across Cloud Run, App Engine, and Cloud Functions. Modal built their entire GPU inference platform on it. DigitalOcean migrated their App Platform to it and saw 2x throughput on Node.js, 7x on WordPress. The <code>systrap</code> mode (which replaced ptrace) drastically reduced overhead, and gVisor reimplements ~200 Linux syscalls in Go, but the Sentry itself only makes ~70 host syscalls — a dramatically smaller surface than the kernel's 385+.</p>
+
+<p>The strongest case for gVisor over microVMs is <strong>GPU workloads</strong>. VFIO GPU passthrough into a microVM breaks the VM isolation boundary anyway — the GPU has DMA access to host memory. gVisor's <code>nvproxy</code> intercepts CUDA calls in a memory-safe layer, which arguably gives you better security than a microVM with a passed-through GPU. This is exactly why Modal uses gVisor for GPU inference.</p>
+
+<p>The strongest case for microVMs over gVisor is <strong>compatibility</strong>. gVisor re-implements a subset of the Linux kernel. If your workload hits an unimplemented syscall or kernel feature, it breaks — and Google Cloud Run <a href="https://cloud.google.com/blog/products/serverless/cloud-run-second-gen">moved to microVMs for their second-gen execution environment</a> partly because customers kept asking for kernel features gVisor didn't support. MicroVMs run a real kernel; everything just works.</p>
+
+<p>The honest take: gVisor and microVMs are complementary tools for different points on the isolation-vs-compatibility spectrum. gVisor wins on startup speed (~50ms), memory efficiency, and GPU workloads. MicroVMs win on compatibility, nested virtualization, and the simplicity of "it's just Linux." Neither has won. Both are thriving.</p>
+
+<div class="callout">
+  <div class="callout-title">The "hardened containers are fine" objection</div>
+  <p>A reasonable pushback: "We run containers with seccomp, AppArmor, read-only rootfs, no capabilities, and user namespaces. Zero escapes in production." That's legitimate for <strong>trusted workloads</strong> — your own code, your own team. The microVM argument is strongest for <strong>untrusted workloads</strong>: AI agent output, CI scripts from hundreds of developers, multi-tenant platforms. The operational burden of hardening every container correctly across thousands of configurations exceeds the operational burden of just booting a VM. Both approaches have their place.</p>
+</div>
+
+<h2>The Ecosystem Is Thriving</h2>
+
+<p>What excites me most about this space in 2026 is the <strong>diversity</strong>. There isn't one microVM solution: there's an ecosystem, and it's maturing fast:</p>
+
+<p><strong>rust-vmm</strong> is consolidating into a monorepo (announced at FOSDEM 2026) and adding RISC-V support. The shared crate ecosystem means improvements to virtio, KVM bindings, or memory management benefit <em>every</em> VMM that uses it.</p>
+
+<p><strong>libkrun</strong> from Red Hat is a sleeper hit: a library-based VMM with sub-200ms startup, transparent socket impersonation (no TAP devices needed), and paravirtualized GPU support on macOS. It powers Microsandbox and is integrated with <code>crun</code> for running containers directly inside microVMs.</p>
+
+<p><strong><a href="https://www.ubicloud.com/">Ubicloud</a></strong> is quietly proving the model works for CI, and for building an entire open-source cloud. Their architecture is instructive: a Ruby/Postgres control plane communicates with bare-metal Linux+KVM servers via SSH, where <a href="https://www.ubicloud.com/blog/cloud-virtualization-red-hat-aws-firecracker-and-ubicloud-internals">Cloud Hypervisor runs each VM inside Linux namespaces</a> for additional isolation. They offer GitHub Actions runners at 10x cheaper than GitHub's pricing, with each job getting a clean, ephemeral VM on bare-metal providers. Open source under AGPL.</p>
+
+<p><strong><a href="https://aws.amazon.com/about-aws/whats-new/2026/02/amazon-ec2-nested-virtualization-on-virtual/">AWS added nested virtualization</a></strong> on standard EC2 instances (C8i/M8i/R8i) in February 2026. Previously you needed expensive bare-metal instances to run KVM inside EC2. Now a $0.86/hr c8i.4xlarge in Frankfurt can run Cloud Hypervisor with nested VMs. This unlocks microVM-based CI/CD on AWS without the $9-20/hr bare-metal tax.</p>
+
+<p><strong>crosvm</strong>, Google's VMM for Chrome OS, remains actively maintained and powers Linux (Crostini) and Android VMs on every Chromebook. Another rust-vmm consumer, another proof point for the shared ecosystem.</p>
+
+<p><strong>Lima</strong> (CNCF Incubating, 20K+ GitHub stars) started as a way to run containerd on macOS and has evolved into something broader. At KubeCon EU 2026, the Lima team presented their expansion into AI agent sandboxing. v2.0 added GPU acceleration via krunkit and an MCP server that lets AI agents safely operate inside VMs. Lima wraps QEMU, Apple's Virtualization.framework, WSL2, or krunkit as VM backends, and powers Colima, Rancher Desktop, and AWS Finch. It's the developer-friendly on-ramp to the whole ecosystem.</p>
+
+<h2>The Accidental Revolution</h2>
+
+<p>Here's the thing I keep coming back to: <strong>none of this was built for AI agents.</strong></p>
+
+<p>Firecracker was built for AWS Lambda in 2018. Cloud Hypervisor was built for general cloud workloads in 2019. rust-vmm has been maturing since 2018. Kata Containers has been in production since 2017. Fly.io has been running Firecracker since 2020. The monorepo consolidation, RISC-V support, IOMMU, formal verification with Kani proofs, all of this was happening quietly, year after year, while most of the industry was focused on Kubernetes and containers.</p>
+
+<p>The technology was ready. What was missing was <em>demand</em>.</p>
+
+<p>Then in 2025, agentic coding exploded. Claude Code, Codex, Copilot, Gemini CLI — millions of sessions per day where an AI writes code and needs to run it <em>somewhere</em>. Every platform in the world suddenly needed an answer to "where does the agent's code execute?" and needed it <em>now</em>.</p>
+
+<p>The answer was already sitting there. Mature. Battle-tested. Running trillions of Lambda invocations and millions of Fly.io Machines. The microVM ecosystem didn't need to be invented for AI: it needed to be <em>discovered</em>. E2B, Sprites, Docker Sandboxes, Bedrock AgentCore, Ona, Lima's MCP server, all of them were built in months, not years, because the hard problems were already solved in rust-vmm crates and production VMMs.</p>
+
+<p>That's the quiet infrastructure revolution. Not a single breakthrough moment, but an accumulation: eight years of Rust VMM development, a shared crate ecosystem across competing companies, production battle-testing at hyperscaler scale, and then a sudden explosion of demand that pulled it all into the spotlight.</p>
+
+<p>It's a little like what happened with containers in 2013. The kernel primitives (namespaces and cgroups) had been in Linux since 2006-2008. LXC existed since 2008. But it took Docker's developer experience to create the demand that made containers mainstream.</p>
+
+<div class="pull-quote">
+  <p>For microVMs, the "Docker moment" is agentic AI.</p>
+</div>
+
+<hr>
+
+<p>The endgame isn't "microVMs replace containers." It's that the isolation layer becomes invisible.</p>
+
+<p>You'll still write Dockerfiles. You'll still <code>kubectl apply</code>. You'll still think in containers. But under the hood, each pod boots its own kernel in <span class="num">125ms</span>. Each AI agent session gets its own hardware-isolated VM. Each CI job runs on dedicated cores behind an EPT boundary. And you never notice, because the VMM is <span class="num">&lt;5 MiB</span> of Rust that boots before your HTTP request times out.</p>
+
+<p>This is already happening. Kata Containers puts a VM behind every Kubernetes pod. Docker Sandboxes wrap each coding agent in a microVM. AWS Lambda has been doing it since 2018 for every function invocation. The pattern is container-inside-VM: the container provides the packaging and developer experience, the VM provides the isolation. The developer sees a container. The security team sees a VM. Both are right.</p>
+
+<p>The infrastructure to make this seamless is maintained by engineers at AWS, Intel, Google, Microsoft, Red Hat, and Alibaba, all contributing to the same monorepo of Rust crates. It runs on x86, ARM, and soon RISC-V. It's formally verified with Kani proofs. Eight years of quiet work, and now the demand has arrived.</p>
+
+<p>Your container is not a sandbox. It was never designed to be one. But it doesn't need to be — as long as it's running inside something that is.</p>
+
+<hr>
+
+<div class="footnote">
+  <p><strong>Further reading:</strong></p>
+  <p><strong>VMMs and runtimes:</strong> <a href="https://firecracker-microvm.github.io/">Firecracker</a> (<a href="https://aws.amazon.com/blogs/aws/firecracker-lightweight-virtualization-for-serverless-computing/">Jeff Barr's launch post</a>) &bull; <a href="https://www.cloudhypervisor.org/">Cloud Hypervisor</a> (<a href="https://www.cloudhypervisor.org/blog/v51-0/">v51.0 release</a>) &bull; <a href="https://github.com/rust-vmm">rust-vmm</a> &bull; <a href="https://qemu.readthedocs.io/en/latest/system/i386/microvm.html">QEMU microvm</a> &bull; <a href="https://github.com/containers/libkrun">libkrun</a> &bull; <a href="https://katacontainers.io/">Kata Containers</a> &bull; <a href="https://edera.dev/">Edera</a> &bull; <a href="https://lima-vm.io/">Lima</a> &bull; <a href="https://tart.run/">Tart</a></p>
+  <p><strong>AI sandboxes:</strong> <a href="https://sprites.dev/">Sprites.dev</a> &bull; <a href="https://e2b.dev/">E2B</a> &bull; <a href="https://github.com/zerocore-ai/microsandbox">Microsandbox</a> &bull; <a href="https://github.com/jingkaihe/matchlock">Matchlock</a> &bull; <a href="https://ona.com/">Ona</a> &bull; <a href="https://docs.docker.com/ai/sandboxes/">Docker Sandboxes</a></p>
+  <p><strong>Curated lists:</strong> <a href="https://github.com/nicholasgasior/awesome-microvm">awesome-microvm</a> &bull; <a href="https://github.com/iximiuz/awesome-container-tinkering">Container Runtimes and Related Tools (iximiuz)</a></p>
+  <p><strong>Jessie Frazelle (2018, ahead of her time):</strong> <a href="https://blog.jessfraz.com/post/containers-zones-jails-vms/">Setting the Record Straight: containers vs. Zones vs. Jails vs. VMs</a> &bull; <a href="https://blog.jessfraz.com/post/hard-multi-tenancy-in-kubernetes/">Hard Multi-Tenancy in Kubernetes</a> &bull; <a href="https://blog.jessfraz.com/post/getting-towards-real-sandbox-containers/">Getting Towards Real Sandbox Containers</a> &bull; <a href="https://blog.jessfraz.com/post/containers-security-and-echo-chambers/">Containers, Security, and Echo Chambers</a></p>
+  <p><strong>Deep dives:</strong> <a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a> &bull; <a href="https://www.usenix.org/publications/loginonline/freebsd-firecracker">FreeBSD on Firecracker (Colin Percival)</a> &bull; <a href="https://ona.com/blog/how-claude-code-escapes-its-own-denylist-and-sandbox">How Claude Code escapes its own sandbox (Ona/Veto)</a> &bull; <a href="https://blog.alexellis.io/how-to-run-firecracker-without-kvm-on-regular-cloud-vms/">Firecracker without KVM via PVM (Alex Ellis)</a> &bull; <a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Firecracker on OCI: VM vs bare metal (Oracle)</a> &bull; <a href="https://code.claude.com/docs/en/sandboxing">Claude Code sandboxing docs</a> &bull; <a href="https://www.anthropic.com/engineering/claude-code-sandboxing">Anthropic: Beyond permission prompts</a></p>
+  <p style="margin-top:1rem;"><em>Line counts verified with <code>cloc</code> on fresh git clones (March 2026). All CVEs linked to their NVD or advisory pages. Performance claims sourced from the <a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a> and <a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Oracle's OCI benchmarks</a>.</em></p>
+</div>
+
+<footer>
+  &copy; 2026 Emir Beganovic
+</footer>
+
+</div><!-- .container -->
+
+<script>
+// ============================================
+// Layer Info Data
+// ============================================
+const layerInfoData = {
+  'container-host': '<strong style="color:var(--red)">Shared kernel (40M+ lines of code).</strong> Every container on the host shares this kernel. A kernel exploit (CVE-2024-1086, CVE-2022-0185, ...) gives you root on the host and access to every other container. The kernel exposes ~385 syscalls; seccomp blocks some, but the attack surface is enormous.',
+  'container-ns': '<strong>Namespaces hide resources, they don\'t protect them.</strong> PID namespace hides other processes. Mount namespace hides other filesystems. Network namespace gives you your own IP. But these are all enforced by the shared kernel. A kernel bug bypasses all of them simultaneously.',
+  'container-cg': '<strong>Cgroups limit resources, not access.</strong> They prevent your container from using too much CPU, memory, or I/O. They do nothing to prevent privilege escalation, kernel exploitation, or accessing host resources through side channels.',
+  'container-seccomp': '<strong>Seccomp-bpf filters syscalls.</strong> Docker\'s default profile blocks ~44 of ~~385 syscalls. Better than nothing, but the remaining 350+ syscalls include plenty of attack surface. And if you need <code>--privileged</code> for Docker-in-Docker... seccomp is disabled entirely.',
+  'container-code': '<strong>Your process runs directly on the host kernel.</strong> There is exactly zero hardware between your code and the kernel. Every syscall is a direct function call into the shared kernel. Root inside the container + a kernel bug = root on the host.',
+  'vm-host': '<strong>Host kernel manages KVM.</strong> KVM is a kernel module (~25K lines) that turns Linux into a hypervisor. It configures hardware virtualization (VT-x/AMD-V) and creates isolated execution contexts. The host kernel is still here, but guest code never touches it directly.',
+  'vm-vmm': '<strong>VMM is a userspace process.</strong> Firecracker/Cloud Hypervisor runs as an unprivileged process on the host, jailed with seccomp-bpf (Firecracker allows only ~25 syscalls). It configures vCPUs, memory, and virtio devices. Even if compromised, it has minimal host access. ~83-106K lines of Rust eliminates memory safety bugs.',
+  'vm-guest': '<strong>Dedicated kernel, hardware-isolated.</strong> The guest runs its own Linux kernel inside a hardware-enforced boundary (EPT/NPT page tables, VMCS). It cannot see host memory, host processes, or other VMs. Root inside the guest does NOT give you root on the host. The CPU enforces this.',
+  'vm-runtime': '<strong>Optional layer for compatibility.</strong> You can run Podman/Docker inside the VM for OCI image compatibility. But the security boundary is the VM, not the container. Even a full container escape only lands you in the ephemeral VM—no persistence, no host access, destroyed in seconds.',
+  'vm-code': '<strong>Your code is double-isolated.</strong> It runs inside a container, inside a VM, on hardware-enforced boundaries. Breaking out of the container reaches... an ephemeral VM with no secrets and no network path to the host. The VM is destroyed when the workload ends.'
+};
+
+function showLayerInfo(el) {
+  document.querySelectorAll('.layer').forEach(l => l.classList.remove('active'));
+  el.classList.add('active');
+  const info = layerInfoData[el.dataset.info];
+  const infoEl = document.getElementById('layer-info');
+  infoEl.innerHTML = info;
+  infoEl.classList.add('fade-in');
+  setTimeout(() => infoEl.classList.remove('fade-in'), 400);
+}
+
+// ============================================
+// Matryoshka
+// ============================================
+const matryoshkaInfo = [
+  { text: '<strong style="color:var(--text-muted)">Host OS compromised:</strong> Game over. Attacker has bare metal access. This is why the host runs minimal packages, no unnecessary services, and is protected by Citadel/SSH hardening. KVM module is the only security-critical component (~25K lines).', color: 'var(--text-muted)' },
+  { text: '<strong style="color:var(--accent)">VMM compromised:</strong> Bad, but contained. The VMM runs as an unprivileged process jailed by seccomp-bpf (~25 allowed syscalls). Exploiting it gives limited host access. Firecracker is ~83K lines of Rust, Cloud Hypervisor ~106K. Memory safety bugs eliminated at compile time.', color: 'var(--accent)' },
+  { text: '<strong style="color:var(--green)">Guest VM compromised:</strong> Root inside the VM? That\'s by design. The VM IS the security boundary. The attacker sees a minimal Alpine Linux with no secrets, no route to other VMs, and a filesystem that\'s destroyed when the workload ends. Hardware virtualization (EPT/NPT) prevents access to host memory.', color: 'var(--green)' },
+  { text: '<strong style="color:var(--orange)">Container runtime compromised:</strong> The attacker has escaped the container... into the ephemeral VM. No persistence. No network path to the host. No access to other workloads. The VM is destroyed in seconds. This is the whole point of the matryoshka model.', color: 'var(--orange)' },
+  { text: '<strong style="color:var(--red)">Untrusted code runs here.</strong> AI-generated code, CI scripts, user submissions. Full root inside the container is fine—the blast radius is limited to the ephemeral VM. Install packages, run servers, modify files—it all dies when the workload ends.', color: 'var(--red)' },
+];
+
+function matryoshkaClick(idx) {
+  document.querySelectorAll('.m-layer').forEach(l => l.style.opacity = '0.4');
+  for (let i = idx; i < 5; i++) {
+    document.getElementById('m-' + i).style.opacity = '1';
+  }
+  const info = matryoshkaInfo[idx];
+  const el = document.getElementById('m-info');
+  el.innerHTML = info.text;
+  el.style.borderLeft = `3px solid ${info.color}`;
+}
+
+// ============================================
+// VMM Cards
+// ============================================
+const vmms = [
+  {
+    name: '<a href="https://firecracker-microvm.github.io/">Firecracker</a>',
+    lang: 'rust',
+    boot: '~125ms',
+    mem: '<5 MiB',
+    loc: '83K',
+    nested: 'No',
+    detail: 'AWS\'s purpose-built VMM for serverless. Deliberately minimal: 5 emulated devices, no BIOS, no PCI bus. The Jailer companion process applies seccomp-bpf, cgroups, and chroot to the VMM itself. Snapshot-restore achieves ~28ms warm starts.',
+    users: 'AWS Lambda, AWS Fargate, Fly.io, E2B, AWS Bedrock AgentCore, Aurora DSQL'
+  },
+  {
+    name: '<a href="https://www.cloudhypervisor.org/">Cloud Hypervisor</a>',
+    lang: 'rust',
+    boot: '~200ms',
+    mem: 'Low',
+    loc: '106K',
+    nested: 'Yes',
+    detail: 'Started by Intel, now maintained by Intel/Microsoft/Cyberus/Tencent. The "Swiss Army knife" microVM—nested KVM, VFIO GPU passthrough, CPU/memory hotplugging, Windows guests. Runs on both KVM and Microsoft Hypervisor (MSHV). ~75ms slower boot than Firecracker.',
+    users: 'Fly.io (GPU), Kata Containers, Ubicloud, Northflank'
+  },
+  {
+    name: '<a href="https://qemu.readthedocs.io/en/latest/system/i386/microvm.html">QEMU (+ microvm)</a>',
+    lang: 'c',
+    boot: '~0.4-1.2s',
+    mem: '100s MiB',
+    loc: '2M',
+    nested: 'Yes',
+    detail: 'The venerable general-purpose VMM. Supports every architecture, every device, and has the most mature VFIO passthrough. Default backend for Kata Containers and KubeVirt. Notably, QEMU now has a <code>microvm</code> machine type <a href="https://qemu.readthedocs.io/en/latest/system/i386/microvm.html">inspired by Firecracker</a>: no PCI, no ACPI, up to 8 virtio-mmio devices, paired with qboot for minimal firmware. With all legacy disabled, QEMU microvm approaches Firecracker boot times. Ubuntu ships a dedicated <code>qemu-system-x86-microvm</code> binary.',
+    users: 'Kata Containers (default), KubeVirt, libvirt, Proxmox, OpenStack, Lima'
+  },
+  {
+    name: '<a href="https://gvisor.dev/">gVisor (runsc)</a> *not a VMM',
+    lang: 'go',
+    boot: '~50-100ms',
+    mem: '10-50 MB',
+    loc: '~500K',
+    nested: 'N/A',
+    detail: '<strong>Not a VMM.</strong> A user-space application kernel written in Go that intercepts syscalls and re-implements them in a memory-safe process. No hypervisor, no guest kernel. Faster startup and lower overhead than microVMs, but weaker isolation (no hardware boundary). The "systrap" mode drastically reduced overhead. Best for GPU workloads (via nvproxy, used by Modal) and semi-trusted code at high density.',
+    users: 'Google Cloud Run, App Engine, Cloud Functions, Modal, DigitalOcean'
+  },
+  {
+    name: '<a href="https://github.com/nestybox/sysbox">Sysbox</a> *not a VMM',
+    lang: 'go',
+    boot: 'Native',
+    mem: 'Native',
+    loc: 'Multi-repo',
+    nested: 'N/A',
+    detail: '<strong>Not a VMM.</strong> An enhanced OCI runtime (runc fork) by Nestybox (now Docker). Enables rootless containers to act as VM-like environments: run systemd, Docker, and even K8s inside a container without <code>--privileged</code>. Uses Linux user namespaces, uid-shifting, and partial procfs/sysfs virtualization. No hypervisor overhead, but also no hardware isolation boundary. Best for dev environments and CI/CD where you need Docker-in-Docker without the security compromise of privileged containers.',
+    users: 'Docker (acquired Nestybox), CI/CD pipelines, dev environments'
+  },
+  {
+    name: '<a href="https://github.com/containers/libkrun">libkrun</a>',
+    lang: 'rust',
+    boot: '<200ms',
+    mem: 'Low',
+    loc: '~15K',
+    nested: 'No',
+    detail: 'Red Hat\'s library-based VMM. Uses Apple Hypervisor Framework on macOS and KVM on Linux. Unique features: Transparent Socket Impersonation (networking without TAP devices) and <a href="https://developers.redhat.com/articles/2025/06/05/how-we-improved-ai-inference-macos-podman-containers">paravirtualized GPU on macOS</a> via virtio-gpu + Vulkan API forwarding through MoltenVK:achieving ~77% of native Metal performance for AI inference, a 40x improvement over CPU-only. Powers Podman machine on macOS (via krunkit), Microsandbox, and integrates with crun for running containers directly inside microVMs.',
+    users: 'Podman machine (macOS), Microsandbox, crun, RamaLama, Matchlock'
+  },
+  {
+    name: '<a href="https://github.com/google/crosvm">crosvm</a>',
+    lang: 'rust',
+    boot: '~150ms',
+    mem: 'Low',
+    loc: '~200K',
+    nested: 'No',
+    detail: 'Google\'s Chrome OS VMM. Powers Linux (Crostini) and Android (ARCVM) VMs on every Chromebook. Also used for the Android Terminal App. Uses rust-vmm crates. Less known outside Chrome OS but actively maintained and battle-tested on millions of devices.',
+    users: 'Chrome OS (every Chromebook), Android Terminal App'
+  },
+  {
+    name: '<a href="https://lima-vm.io/">Lima</a> *wrapper',
+    lang: 'go',
+    boot: '~3-10s',
+    mem: 'Varies',
+    loc: '~30K',
+    nested: 'Yes',
+    detail: 'CNCF Incubating project (Oct 2025, 20K+ GitHub stars). Not a VMM itself—an orchestrator that wraps QEMU, Apple Virtualization.framework, WSL2, or krunkit. Originally built for running containerd on macOS, now expanding to AI agent sandboxing. v2.0 added plugin infrastructure, GPU acceleration via krunkit, and an MCP server for AI agents. Powers Colima, Rancher Desktop, and AWS Finch.',
+    users: 'Colima, Rancher Desktop, Finch (AWS), Podman Desktop, lima-devbox'
+  },
+  {
+    name: '<a href="https://tart.run/">Tart</a> *wrapper',
+    lang: 'swift',
+    boot: '~5-15s',
+    mem: 'Full VM',
+    loc: '~10K',
+    nested: 'N/A',
+    detail: '<strong>Not a VMM</strong>: a CLI wrapper around Apple\'s native Virtualization.framework (which is the actual hypervisor). Built by Cirrus Labs. Near-native performance, no emulation. Treats VM images like containers: push/pull from OCI registries, build with Packer. Rosetta 2 support lets you run x86_64 Linux binaries inside ARM guests. Not a microVM (full macOS/Linux guests, not sub-second boot), but fills a crucial niche: macOS CI needs macOS VMs, and Tart is how the industry does it. Fair Source licensed (free for individuals + up to 100 server cores).',
+    users: 'Atlassian, Figma, Snowflake, Mullvad, Expo, Cirrus Runners'
+  },
+];
+
+const vmmGridEl = document.getElementById('vmm-grid');
+vmms.forEach((vmm, i) => {
+  const card = document.createElement('div');
+  card.className = 'vmm-card expanded';
+  card.onclick = () => card.classList.toggle('expanded');
+  card.innerHTML = `
+    <div class="vmm-card-header">
+      <span class="vmm-name">${vmm.name}</span>
+      <div class="vmm-tags">
+        <span class="vmm-tag ${vmm.lang}">${vmm.lang}</span>
+        ${vmm.nested === 'Yes' ? '<span class="vmm-tag" style="border-color:var(--green);color:var(--green)">nested</span>' : ''}
+      </div>
+    </div>
+    <div class="vmm-stats">
+      <div class="vmm-stat"><div class="vmm-stat-value">${vmm.boot}</div><div class="vmm-stat-label">Boot</div></div>
+      <div class="vmm-stat"><div class="vmm-stat-value">${vmm.mem}</div><div class="vmm-stat-label">Overhead</div></div>
+      <div class="vmm-stat"><div class="vmm-stat-value">${vmm.loc}</div><div class="vmm-stat-label">Lines</div></div>
+      <div class="vmm-stat"><div class="vmm-stat-value">${vmm.nested}</div><div class="vmm-stat-label">Nested</div></div>
+    </div>
+    <div class="vmm-detail">
+      <p>${vmm.detail}</p>
+      <div class="vmm-users"><strong>PRODUCTION USERS:</strong> ${vmm.users}</div>
+    </div>
+  `;
+  vmmGridEl.appendChild(card);
+});
+
+// ============================================
+// History Timeline
+// ============================================
+const historyData = [
+  { year: '1979', name: 'chroot', color: 'var(--text-dim)', info: '<strong>chroot (1979)</strong> — The original filesystem isolation. Changed the apparent root directory for a process. No process isolation, no resource limits. Trivially escapable with a second chroot call. But it planted the seed: <em>what if processes couldn\'t see the whole system?</em>' },
+  { year: '1999', name: 'Jails', color: 'var(--text-muted)', info: '<strong>FreeBSD Jails (1999)</strong> — First real attempt at OS-level virtualization. Isolated filesystem, process table, and networking. Still shared the kernel, but far more complete than chroot. Influenced everything that followed.' },
+  { year: '2004', name: 'Zones', color: 'var(--text-muted)', info: '<strong>Solaris Containers/Zones (2004)</strong> — Sun\'s take on OS virtualization. Resource controls, isolated networking, and a proper security boundary within a single Solaris kernel. Elegant but tied to a dying OS.' },
+  { year: '2005', name: 'OpenVZ', color: 'var(--text-muted)', info: '<strong>OpenVZ (2005)</strong> — Linux container virtualization via a patched kernel. Popular with hosting providers for VPS. Required kernel patches that were never merged upstream, which limited adoption.' },
+  { year: '2006', name: 'cgroups', color: 'var(--orange)', info: '<strong>cgroups (2006)</strong> — Google engineers (Paul Menage, Rohit Seth) contributed "process containers" to the Linux kernel. Renamed to cgroups. Finally: kernel-native resource limiting for CPU, memory, I/O. The foundation that Docker would later build on.' },
+  { year: '2008', name: 'LXC', color: 'var(--orange)', info: '<strong>LXC (2008)</strong> — First complete Linux container implementation using namespaces + cgroups. No kernel patches needed. Docker originally used LXC as its execution backend before replacing it with libcontainer.' },
+  { year: '2013', name: 'Docker', color: 'var(--accent)', info: '<strong>Docker (2013)</strong> — Solomon Hykes demos Docker at PyCon. The killer innovation wasn\'t isolation—it was the <em>developer experience</em>: Dockerfile, image layers, Docker Hub, and a CLI that made containers accessible. Docker made containers mainstream, but it also created the misconception that containers = security.' },
+  { year: '2015', name: 'runc/OCI', color: 'var(--accent)', info: '<strong>runc + OCI (2015)</strong> — Docker extracts its container runtime into runc and co-founds the Open Container Initiative. Standardizes the image and runtime specs. Kubernetes, Podman, and others can now use the same container format without Docker.' },
+  { year: '2018', name: 'FC', color: 'var(--green)', info: '<strong>Firecracker (2018)</strong> — AWS open-sources the VMM powering Lambda. ~83K lines of Rust, <5 MiB overhead, ~125ms boot. The inflection point: for the first time, per-workload VMs are practical at scale. <em>The isolation is no longer a software convention—it\'s enforced by hardware.</em>' },
+  { year: '2018', name: 'gVisor', color: 'var(--green)', info: '<strong>gVisor (2018)</strong> — Google open-sources a user-space application kernel. Intercepts syscalls in a memory-safe Go process instead of passing them to the shared kernel. A middle ground: better isolation than containers, less overhead than VMs.' },
+  { year: '2019', name: 'CH', color: 'var(--green)', info: '<strong>Cloud Hypervisor (2019)</strong> — Intel starts a new rust-vmm-based VMM for general-purpose cloud workloads. Adds nested virtualization, GPU passthrough, hotplugging. Now maintained by Intel, Microsoft, Cyberus, and Tencent.' },
+  { year: '2025', name: 'AI', color: 'var(--pink)', info: '<strong>AI Agent Sandboxes (2025-2026)</strong> — E2B, Fly.io Sprites, Docker Sandboxes, AWS Bedrock AgentCore, Microsandbox. Every major platform ships microVM-based isolation for AI coding agents. The use case that makes the whole industry care about workload isolation.' },
+];
+
+// Build horizontal timeline
+const htlTrack = document.getElementById('htl-track');
+const htlDetail = document.getElementById('htl-detail');
+
+historyData.forEach((item, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'htl-dot';
+  dot.innerHTML = `
+    <div class="htl-year" style="color:${item.color}">${item.year}</div>
+    <div class="htl-circle" style="border-color:${item.color}"></div>
+    <div class="htl-name">${item.name}</div>
+  `;
+  dot.onmouseenter = () => {
+    document.querySelectorAll('.htl-dot').forEach(d => {
+      d.classList.remove('active');
+      d.querySelector('.htl-circle').style.background = 'var(--bg)';
+    });
+    dot.classList.add('active');
+    dot.querySelector('.htl-circle').style.background = item.color;
+    htlDetail.innerHTML = item.info;
+    htlDetail.style.borderLeftColor = item.color;
+  };
+  htlTrack.appendChild(dot);
+});
+
+</script>
+
+</body>
+</html>
