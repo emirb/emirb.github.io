@@ -1050,7 +1050,7 @@
 <p>The consumers tell the story of breadth: Firecracker (AWS), Cloud Hypervisor (Intel/Microsoft), crosvm (Google/ChromeOS), libkrun (Red Hat), Dragonball Sandbox (Alibaba/Kata), OpenVMM (Microsoft), and <a href="https://gitlab.com/virtio-fs/virtiofsd">virtiofsd</a> (the reference virtio-fs daemon, itself a rust-vmm project). Even <a href="https://gitlab.archlinux.org/archlinux/vmexec">vmexec</a>, a zero-setup CLI tool for running commands in throwaway VMs uses the ecosystem. The vhost-user device implementations alone cover can, console, gpio, gpu, i2c, input, rng, scmi, scsi, sound, spi, video, and vsock.</p>
 
 <!-- INTERACTIVE: VMM Landscape -->
-<div class="interactive">
+<div class="not-interactive interactive">
   <div class="interactive-title">The Isolation Landscape in 2026</div>
   <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.5;">Not everything below is a VMM (Virtual Machine Monitor). <strong>VMMs</strong> create and manage hardware-isolated VMs via KVM or similar: Firecracker, Cloud Hypervisor, QEMU, libkrun, crosvm. <strong>Wrappers</strong> like Lima and Tart provide CLI/UX on top of a VMM or host hypervisor but don't implement virtualization themselves. <strong>Alternative runtimes</strong> like gVisor and Sysbox improve on container isolation without a hypervisor. All are included because they're part of the same decision space.</p>
   <div class="vmm-grid" id="vmm-grid">
