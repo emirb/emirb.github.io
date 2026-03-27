@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Your Container Is Not a Sandbox: The State of MicroVM Isolation in 2026</title>
-<meta name="description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, QEMU microvm, AI agent sandboxes, and why your coding agent should boot its own Linux kernel. Interactive guide with verified numbers.">
+<meta name="description" content="The microVM ecosystem was battle-tested long before agentic AI created the demand. A landscape survey: every VMM, the shared Rust crate ecosystem, a dozen AI sandbox platforms, and honest trade-offs.">
 <meta property="og:title" content="Your Container Is Not a Sandbox">
-<meta property="og:description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, AI agent sandboxes, and why your coding agent should boot its own Linux kernel.">
+<meta property="og:description" content="The microVM ecosystem was battle-tested long before agentic AI created the demand. A landscape survey: every VMM, the shared Rust crate ecosystem, a dozen AI sandbox platforms, and honest trade-offs.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://emirb.github.io/blog/microvm-2026">
 <meta property="og:image" content="https://emirb.github.io/blog/microvm-2026/og-image.png">
@@ -15,7 +15,7 @@
 <meta property="article:published_time" content="2026-03-27">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Your Container Is Not a Sandbox">
-<meta name="twitter:description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, AI agent sandboxes, and why your coding agent should boot its own Linux kernel.">
+<meta name="twitter:description" content="The microVM ecosystem was battle-tested long before agentic AI created the demand. A landscape survey: every VMM, the shared Rust crate ecosystem, a dozen AI sandbox platforms, and honest trade-offs.">
 <meta name="twitter:image" content="https://emirb.github.io/blog/microvm-2026/og-image.png">
 <script type="application/ld+json">
 {
@@ -36,19 +36,19 @@
     --text: #1f2328;
     --text-muted: #656d76;
     --text-dim: #8b949e;
-    --accent: #0969da;
-    --accent-bright: #0550ae;
-    --green: #1a7f37;
-    --red: #cf222e;
-    --orange: #bf8700;
-    --purple: #8250df;
-    --pink: #bf3989;
+    --accent: #2563eb;
+    --accent-bright: #2563eb;
+    --green: #059669;
+    --red: #dc2626;
+    --orange: #d97706;
+    --purple: #6366f1;
+    --pink: #6366f1;
     --border: #d0d7de;
     --code-bg: #f6f8fa;
-    --layer-host: #dce8f5;
-    --layer-vm: #d4edda;
-    --layer-container: #f5d0e0;
-    --layer-process: #f0edd0;
+    --layer-host: #dbeafe;
+    --layer-vm: #d1fae5;
+    --layer-container: #ede9fe;
+    --layer-process: #fef3c7;
     --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, monospace;
     --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
     --max-width: 800px;
@@ -56,7 +56,8 @@
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  html { font-size: 18px; scroll-behavior: smooth; overflow-x: hidden; }
+  html { font-size: 18px; overflow-x: hidden; }
+  html:focus-within { scroll-behavior: smooth; }
 
   body {
     background: var(--bg);
@@ -120,6 +121,32 @@
   }
   .hero .meta a { color: var(--accent); text-decoration: none; }
   .hero .meta a:hover { text-decoration: underline; }
+  .author-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .author-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .author-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .author-info strong { font-size: 0.95rem; color: var(--text); }
+  .author-role { color: var(--text); }
+  .author-meta { color: var(--text-muted); font-size: 0.78rem; }
+  .author-links { font-size: 0.78rem; }
+  .author-links a { color: var(--accent); text-decoration: none; }
+  .author-links a:hover { text-decoration: underline; }
 
   /* Typography */
   h2 {
@@ -140,7 +167,7 @@
   a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
   a:hover { text-decoration: none; border-bottom-color: var(--accent); }
   strong { color: #1f2328; font-weight: 600; }
-  em { color: var(--text-muted); }
+  em { color: var(--text); }
 
   code {
     font-family: var(--font-mono);
@@ -250,7 +277,7 @@
     border-radius: 6px;
     margin-bottom: 0.4rem;
     font-size: 0.8rem;
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -879,7 +906,15 @@
   <p style="font-size:0.82rem; color:var(--accent); margin-bottom:0.6rem; letter-spacing:0.06em; text-transform:uppercase; font-weight:700;">The State of MicroVM Isolation in 2026</p>
   <h1>Your Container Is&nbsp;Not&nbsp;a&nbsp;Sandbox</h1>
   <p class="subtitle">The microVM ecosystem was battle-tested long before agentic AI created the demand. Now it's thriving, diverse, and moving fast. This post covers every VMM, the shared Rust crate ecosystem, a dozen AI sandbox platforms and honest trade-offs.</p>
-  <p class="meta">March 27, 2026 &middot; 25 min read &middot; Emir Beganovi&#263; &middot; <a href="https://github.com/emirb">@emirb</a></p>
+  <div class="author-card">
+    <img src="https://avatars.githubusercontent.com/u/3412241?v=4" alt="Emir Beganović" class="author-avatar">
+    <div class="author-info">
+      <strong>Emir Beganovi&#263;</strong>
+      <span class="author-role">Staff SRE at Booking.com, Amsterdam</span>
+      <span class="author-meta">March 27, 2026 &middot; 25 min read</span>
+      <span class="author-links"><a href="https://github.com/emirb">GitHub</a> &middot; <a href="https://www.linkedin.com/in/beganovicemir/">LinkedIn</a></span>
+    </div>
+  </div>
 </header>
 
 <!-- INTRO -->
@@ -889,35 +924,28 @@
 
 <p>I've been running Linux since I was a teenager, yet not until recently did I fully internalize what that sentence truly means.</p>
 
-<p>Following my last few months spent going deep on microVMs, building infrastructure on them and learning every VMM, every isolation approach, every trade-off in this space...I wanted to write a post as the guide I wish I'd had when I started (with a dozen of references, blog posts, presentations and READMEs, I dug up so much high quality content). This covers the VMMs, the shared Rust ecosystem powering them, the AI sandbox explosion, and where I believe it's all heading. I won't talk too much about AI but rather about the state of VMs in 2026.</p>
-<!-- TL;DR -->
+<p>Following my last few months spent going deep on microVMs, building infrastructure on them and learning every VMM, every isolation approach, every trade-off in this space...I wanted to write a post as the guide I wish I'd had when I started (with a dozen of references, blog posts, presentations and READMEs, I dug up so much high quality content). This covers the VMMs, the shared Rust ecosystem powering them, the AI sandbox explosion, and where I believe it's all heading.</p>
+<!-- WHAT THIS POST COVERS -->
 
-<div class="not-interactive interactive" style="border-color: var(--green);">
-  <div class="interactive-title" style="color: var(--green);">TL;DR: 5 things</div>
-  <ol style="font-size:0.92rem; line-height:1.8; padding-left:1.2rem; margin:0;">
-    <li><strong>Containers were never a security boundary</strong>: 8 container escape CVEs shipped in the last 18 months alone, and the 40M-line shared kernel is the attack surface.</li>
-    <li><strong>MicroVMs boot in ~125ms with &lt;5 MiB overhead</strong>: the "VMs are slow" objection died years ago; Firecracker, Cloud Hypervisor, and the shared <a href="https://github.com/rust-vmm" style="color:var(--green)">rust-vmm</a> Rust crate ecosystem made it irrelevant.</li>
-    <li><strong>For microVMs, the "Docker moment" is agentic AI</strong>: the ecosystem was mature and battle-tested before agentic coding exploded; <a href="https://e2b.dev/" style="color:var(--green)">E2B</a>, <a href="https://sprites.dev/" style="color:var(--green)">Sprites</a>, <a href="https://docs.docker.com/ai/sandboxes/" style="color:var(--green)">Docker Sandboxes</a>, <a href="https://aws.amazon.com/bedrock/agentcore/" style="color:var(--green)">Bedrock</a>, <a href="https://ona.com/" style="color:var(--green)">Ona</a>, and others built their sandboxes in months because the hard problems were already solved in rust-vmm.</li>
-    <li><strong>The ecosystem is thriving and diverse</strong>: <a href="https://firecracker-microvm.github.io/" style="color:var(--green)">Firecracker</a>, <a href="https://www.cloudhypervisor.org/" style="color:var(--green)">Cloud Hypervisor</a>, <a href="https://www.qemu.org/docs/master/system/i386/microvm.html" style="color:var(--green)">QEMU microvm</a>, <a href="https://gvisor.dev/" style="color:var(--green)">gVisor</a>, <a href="https://github.com/containers/libkrun" style="color:var(--green)">libkrun</a>, <a href="https://github.com/google/crosvm" style="color:var(--green)">crosvm</a>, <a href="https://lima-vm.io/" style="color:var(--green)">Lima</a>, <a href="https://tart.run/" style="color:var(--green)">Tart</a>, plus 10+ AI sandbox platforms, all sharing code and converging on the same architecture.</li>
-    <li><strong>The VMM is becoming invisible</strong>: the container was the abstraction of the 2010s; the microVM is becoming the abstraction of the 2020s, and the value is moving up the stack to orchestration and developer experience.</li>
-  </ol>
-</div>
-
-<div class="callout" style="margin-top:2rem;">
-  <div class="callout-title">How to read this post</div>
-  <p style="margin-bottom:0; font-size:0.9rem; line-height:1.7;">
-    Grab a cup of coffee (or tea).<br><br>
-    <strong>Want the thesis:</strong> read the next two sections and the conclusion.<br>
-    <strong>Choosing a VMM:</strong> jump to <em>Firecracker vs. Cloud Hypervisor</em>.<br>
-    <strong>Building agent sandboxes:</strong> jump to <em>AI Agents Made Everyone Care</em>.<br>
-    <strong>Kubernetes isolation:</strong> jump to <em>Beyond Sandboxes: MicroVMs in Kubernetes</em>.<br>
-    <strong>Full landscape:</strong> read it all as every section builds on the last.
+<div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin:2rem 0;">
+  <p style="font-weight:700; margin-bottom:0.8rem;">In this post:</p>
+  <ul style="font-size:0.9rem; line-height:1.9; padding-left:1.2rem; margin:0;">
+    <li>Why containers were never a security boundary (8 escape CVEs in 18 months)</li>
+    <li>MicroVMs boot in ~125ms with &lt;5 MiB overhead — the "VMs are slow" objection is dead</li>
+    <li>The <a href="https://github.com/rust-vmm">rust-vmm</a> shared crate ecosystem: the real revolution, not any single VMM</li>
+    <li>Firecracker vs. Cloud Hypervisor: how to choose</li>
+    <li>A dozen AI sandbox platforms compared — from E2B to SlicerVM to Vercel</li>
+    <li>gVisor, Kata Containers, Edera, KubeVirt: microVMs meet Kubernetes</li>
+    <li>The full isolation timeline: chroot (1979) to AI agent sandboxes (2026)</li>
+  </ul>
+  <p style="font-size:0.82rem; color:var(--text-muted); margin-top:1rem; margin-bottom:0;">
+    <strong>Short on time?</strong> Read the next two sections and the <a href="#conclusion">conclusion</a>.
+    <strong>Choosing a VMM?</strong> Jump to <a href="#firecracker-vs-cloud-hypervisor">Firecracker vs. Cloud Hypervisor</a>.
+    <strong>Building agent sandboxes?</strong> Jump to <a href="#ai-agents">AI Agents Made Everyone Care</a>.
   </p>
 </div>
 
 <hr>
-
-<h2>Deep Dive</h2>
 
 <p>Linux containers are a <em>packaging and resource control</em> mechanism. Namespaces and cgroups restrict what a process can see and how much CPU and memory it can use. But every container on a host shares the same kernel. A kernel exploit, a rogue capability, a mis-mounted socket, and you're root on the host, with access to every other tenant's data. The kernel has <span class="num-bad">~40 million</span> lines of C and exposes <span class="num-bad">450+</span> syscalls. That is the attack surface.</p>
 
@@ -999,7 +1027,7 @@
 
 <h3>This Isn't Theoretical</h3>
 
-<p>Container escapes are not hypothetical. From <a href="https://hosted-files.sched.co/kccnceu2026/e8/KubeCon%20EU%202026%20Kubernetes%20and%20Linux%20Security.pdf">Marina Moore's KubeCon EU 2026</a>  (referencing Marina again, thanks!), here are recent CVEs, all from 2024-2025:</p>
+<p>Container escapes are not hypothetical. From <a href="https://hosted-files.sched.co/kccnceu2026/e8/KubeCon%20EU%202026%20Kubernetes%20and%20Linux%20Security.pdf">Marina Moore's KubeCon EU 2026</a>, here are recent CVEs, all from 2024-2025:</p>
 
 <table>
   <tr><th>CVE</th><th>What happened</th></tr>
@@ -1095,7 +1123,7 @@
   </div>
 </div>
 
-<h2>Firecracker vs. Cloud Hypervisor: The Fork in the Road</h2>
+<h2 id="firecracker-vs-cloud-hypervisor">Firecracker vs. Cloud Hypervisor: The Fork in the Road</h2>
 
 <p>If you're evaluating microVMs today, you'll quickly arrive at the same fork like I did at my work: Firecracker or Cloud Hypervisor?</p>
 
@@ -1105,7 +1133,7 @@
 
 <p>Firecracker is a scalpel. It deliberately <em>removes</em> features to minimize attack surface. No GPU passthrough. No CPU hotplugging. No nested virtualization. This is perfect for AWS Lambda's threat model: short-lived functions that never need <code>/dev/kvm</code> or a GPU.</p>
 
-<p>Cloud Hypervisor is a Swiss Army knife. It keeps the minimal spirit but adds the features that general-purpose cloud workloads need: nested KVM (<code>--cpus nested=on</code> added last December 2025), VFIO device passthrough (GPUs!), CPU/memory hotplugging, Windows guest support. The cost is a few dozen of ms slower boot time and a slightly larger attack surface (I am not sure, it uses so much of rust-vmm code though).</p>
+<p>Cloud Hypervisor is a Swiss Army knife. It keeps the minimal spirit but adds the features that general-purpose cloud workloads need: nested KVM (<code>--cpus nested=on</code> added last December 2025), VFIO device passthrough (GPUs!), CPU/memory hotplugging, Windows guest support. The cost is a few dozen ms slower boot time and a slightly larger attack surface, though the core is heavily built on the same rust-vmm crates as Firecracker.</p>
 
 <div class="callout">
   <div class="callout-title">The deciding question</div>
@@ -1149,12 +1177,9 @@
 
 <p>Runtime overhead is equally minimal. Guest code runs directly on the CPU via KVM with single-digit percentage overhead. Oracle's <a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Firecracker on OCI benchmarks</a> showed ~3% CPU overhead even with nested virtualization. In practice, dedicated-core VMs often <em>outperform</em> containers on shared hosts: when a container gets <code>--cpus=4</code> on a 192-thread host, CFS bandwidth throttling freezes the entire cgroup once daemon threads and GC exceed the quota. A VM with dedicated cores has no quota and the CPU time is a physical property of the hardware.</p>
 
-<p>The honest trade-off is operational complexity, not performance. Managing guest kernels, rootfs images, and a VMM is real work. I enjoy it because our goal was to build the fastest, safest internal CI platform possible. In that segment and in several other, MicroVMs earn their place: when you're running untrusted code, when you need multi-tenant isolation, or operate at a scale where the security cost of a single container escape exceeds the engineering cost of running a VMM.</p>
+<p>The honest trade-off is operational complexity, not performance. Managing guest kernels, rootfs images, and a VMM is real work. I enjoy it because our goal was to build the fastest, safest internal CI platform possible. In that segment, and others like it, microVMs earn their place: when you're running untrusted code, when you need multi-tenant isolation, or operate at a scale where the security cost of a single container escape exceeds the engineering cost of running a VMM.</p>
 
-<div class="callout" style="border-left:3px solid var(--green);">
-  <div class="callout-title" style="color:var(--green)">Bottom line</div>
-  <p style="margin:0;">The old "VMs are too slow" argument stopped being persuasive years ago. Boot time is ~125ms. Runtime overhead is single-digit percent. The real cost is operational, not performance.</p>
-</div>
+<p>The old "VMs are too slow" argument stopped being persuasive years ago. Boot time is ~125ms. Runtime overhead is single-digit percent. The real cost is operational, not performance.</p>
 
 <h2>The Matryoshka Model</h2>
 
@@ -1191,7 +1216,7 @@
 
 <p>This is the model that <a href="https://sprites.dev/">Fly.io Sprites</a>, <a href="https://e2b.dev/">E2B</a>, AWS Lambda, and Kata Containers more or less converge on. The details differ: Firecracker vs. Cloud Hypervisor, ephemeral vs. persistent, containers vs. direct processes...but the architecture is the same: <strong>the VM</strong> is the <strong>security boundary</strong>, not the container.</p>
 
-<h2>AI Agents Made Everyone Care</h2>
+<h2 id="ai-agents">AI Agents Made Everyone Care</h2>
 
 <p>In 2024, microVMs were an infrastructure niche. AWS used them. Fly.io used them. A handful of companies building hardened Kubernetes (Kata Containers, Edera) used them. Everyone else ran containers and hoped for the best.</p>
 
@@ -1271,9 +1296,7 @@
   </div>
 </div>
 
-<p>The pattern is unmistakable. In the span of 18 months, <strong>nearly every major platform</strong> converged on the same answer: untrusted code runs in a VM, not a container. The only debate is which VMM and how persistent the state should be.</p>
-
-<p>Cloudflare's V8 isolates are the interesting outlier: sub-millisecond startup but limited to JavaScript and WebAssembly. For full Linux environments where agents install packages and run Docker, microVMs are the only game in town.</p>
+<p>The pattern is unmistakable. In the span of 18 months, <strong>nearly every major platform</strong> converged on the same answer: untrusted code needs stronger isolation than a container. Most chose microVMs. Modal chose gVisor. Cloudflare chose V8 isolates. The debate is no longer <em>whether</em> to isolate but <em>how</em>: which VMM, which boundary, and how persistent the state should be.</p>
 
 <h2>Beyond Sandboxes: MicroVMs in Kubernetes</h2>
 
@@ -1311,7 +1334,7 @@
 
 <div class="callout">
   <div class="callout-title">The "hardened containers are fine" objection</div>
-  <p>A reasonable pushback: "We run containers with seccomp, AppArmor, read-only rootfs, no capabilities, and user namespaces. Zero escapes in production." That's legitimate for <strong>trusted workloads</strong> of your own code. (but still you almost always have third-party dependencies). The microVM argument is strongest for <strong>untrusted workloads</strong>: AI agent output, CI scripts from hundreds of developers, multi-tenant platforms. The operational burden of hardening every container correctly across thousands of configurations exceeds the operational burden of just booting a VM. Both approaches have their place.</p>
+  <p>A reasonable pushback: "We run containers with seccomp, AppArmor, read-only rootfs, no capabilities, and user namespaces. Zero escapes in production." That's legitimate for <strong>trusted workloads</strong> of your own code. The microVM argument is strongest for <strong>untrusted workloads</strong>: AI agent output, CI scripts from hundreds of developers, multi-tenant platforms. The operational burden of hardening every container correctly across thousands of configurations exceeds the operational burden of just booting a VM. Both approaches have their place.</p>
 </div>
 
 <h2>The Ecosystem Is Thriving</h2>
@@ -1336,11 +1359,11 @@
 
 <p>Firecracker was built for AWS Lambda in 2018. Cloud Hypervisor was built for general cloud workloads in 2019. rust-vmm has been maturing since 2018. Kata Containers has been in production since 2017. Fly.io has been running Firecracker since 2020. The monorepo consolidation, RISC-V support, IOMMU, formal verification with Kani proofs, all of this was happening quietly, year after year, while most of the industry was focused on Kubernetes and containers.</p>
 
-<p>The technology was ready, but what was missing was <em>demand</em>. (chicken and the egg problem I guess)</p>
+<p>The technology was ready, but what was missing was <em>demand</em>.</p>
 
 <p>Then in 2025, agentic coding exploded. Claude Code, Codex, Copilot, Gemini CLI, you name it: millions of sessions per day where an AI writes code and needs to run it <em>somewhere</em>. Every platform in the world suddenly needed an answer to "where does the agent's code execute?" and needed it <em>now</em>.</p>
 
-<p>The answer was already sitting there. Mature. Battle-tested. Running trillions of Lambda invocations and millions of Fly.io Machines. The microVM ecosystem didn't need to be invented for AI: it needed to be <em>discovered</em>. E2B, Sprites, Docker Sandboxes, Bedrock AgentCore, Ona, Lima's MCP server, all of them were built in months, not years, because the hard problems were already solved in rust-vmm crates and production VMMs.</p>
+<p>The answer was already sitting there. Mature. Battle-tested. Running trillions of Lambda invocations and millions of Fly.io Machines. The microVM ecosystem didn't need to be invented for AI: it needed to be <em>discovered</em>. Nearly every platform in the sandbox grid above was built in months, not years, because the hard problems were already solved in rust-vmm crates and production VMMs.</p>
 
 <p>That's the quiet infrastructure revolution. Not a single breakthrough moment, but an accumulation: eight years of Rust VMM development, a shared crate ecosystem across competing companies, production battle-testing at hyperscaler scale, and then a sudden explosion of demand that pulled it all into the spotlight.</p>
 
@@ -1352,7 +1375,7 @@
 
 <hr>
 
-<h2>Summary</h2>
+<h2 id="conclusion">Conclusion</h2>
 <p>The endgame, in my opinion, isn't really that "microVMs will replace containers." It's that the <b>isolation layer becomes invisible</b>.</p>
 
 <p>You'll still write Dockerfiles. You'll still <code>kubectl apply</code>. You'll still think in containers, and that's nice (no new cognitive load). But under the hood, each pod boots its own kernel in <span class="num">~200ms</span>. Each AI agent session, each CI job, and so on, gets its own hardware-isolated VM. And you never notice, because the VMM is <span class="num">&lt;a few MiB</span> of Rust that boots super fast.</p>
@@ -1361,9 +1384,7 @@
 
 <p>The infrastructure to make this seamless is maintained by engineers at AWS, Intel, Google, Microsoft, Red Hat, and Alibaba, all contributing to the same monorepo of Rust crates. Thank you! Eight years of quiet work, and now the demand has arrived.</p>
 
-<p>Your container is not a sandbox because it was never designed to be one. But it doesn't need to be! (as long as it's running inside something that is)</p>
-<p>  Thanks for reading this far. It was nice letting all of that out. 
-</p>
+<p>Your container is not a sandbox because it was never designed to be one. But it doesn't need to be, as long as it's running inside something that is.</p>
 
 <p><i>Disclaimer: I am a Staff SRE at Booking.com working on developer-facing CI infrastructure that runs in microVMs. All opinions are my own.</i></p>
 
@@ -1538,41 +1559,33 @@ const vmms = [
   {
     name: '<a href="https://gvisor.dev/">gVisor (runsc)</a> *not a VMM',
     lang: 'go',
-    boot: '~50-100ms',
-    mem: '10-50 MiB',
-    loc: '~500K',
-    nested: 'N/A',
-    detail: '<strong>Not a VMM.</strong> A user-space application kernel written in Go that intercepts syscalls and re-implements them in a memory-safe process. No hypervisor, no guest kernel. Faster startup and lower overhead than microVMs, but weaker isolation (no hardware boundary). The "systrap" mode drastically reduced overhead. Best for GPU workloads (via nvproxy, used by Modal) and semi-trusted code at high density.',
+    boot: '', mem: '', loc: '', nested: '',
+    noStats: true,
+    detail: 'A user-space application kernel written in Go that intercepts syscalls and re-implements them in a memory-safe process. No hypervisor, no guest kernel. Faster startup and lower overhead than microVMs, but weaker isolation (no hardware boundary). The "systrap" mode drastically reduced overhead. Best for GPU workloads (via nvproxy, used by Modal) and semi-trusted code at high density.',
     users: 'Google Cloud Run, App Engine, Cloud Functions, Modal, DigitalOcean'
   },
   {
     name: '<a href="https://github.com/nestybox/sysbox">Sysbox</a> *not a VMM',
     lang: 'go',
-    boot: 'Native',
-    mem: 'Native',
-    loc: 'Multi-repo',
-    nested: 'N/A',
-    detail: '<strong>Not a VMM.</strong> An enhanced OCI runtime (runc fork) by Nestybox (now Docker). Enables rootless containers to act as VM-like environments: run systemd, Docker, and even K8s inside a container without <code>--privileged</code>. Uses Linux user namespaces, uid-shifting, and partial procfs/sysfs virtualization. No hypervisor overhead, but also no hardware isolation boundary. Best for dev environments and CI/CD where you need Docker-in-Docker without the security compromise of privileged containers.',
+    boot: '', mem: '', loc: '', nested: '',
+    noStats: true,
+    detail: 'An enhanced OCI runtime (runc fork) by Nestybox (now Docker). Enables rootless containers to act as VM-like environments: run systemd, Docker, and even K8s inside a container without <code>--privileged</code>. Uses Linux user namespaces, uid-shifting, and partial procfs/sysfs virtualization. No hypervisor overhead, but also no hardware isolation boundary. Best for dev environments and CI/CD where you need Docker-in-Docker without the security compromise of privileged containers.',
     users: 'Docker (acquired Nestybox), CI/CD pipelines, dev environments'
   },
   {
     name: '<a href="https://lima-vm.io/">Lima</a> *wrapper',
     lang: 'go',
-    boot: '~3-10s',
-    mem: 'Varies',
-    loc: '~30K',
-    nested: 'Yes',
+    boot: '', mem: '', loc: '', nested: '',
+    noStats: true,
     detail: 'CNCF Incubating project (Oct 2025, 20K+ GitHub stars). Not a VMM itself but rather an orchestrator that wraps QEMU, Apple Virtualization.framework, WSL2, or krunkit. Originally built for running containerd on macOS, now expanding to AI agent sandboxing. v2.0 added plugin infrastructure, GPU acceleration via krunkit, and an MCP server for AI agents. Powers Colima, Rancher Desktop, and AWS Finch.',
     users: 'Colima, Rancher Desktop, Finch (AWS), Podman Desktop, lima-devbox'
   },
   {
     name: '<a href="https://tart.run/">Tart</a> *wrapper',
     lang: 'swift',
-    boot: '~5-15s',
-    mem: 'Full VM',
-    loc: '~10K',
-    nested: 'N/A',
-    detail: '<strong>Not a VMM</strong>: a CLI wrapper around Apple\'s native Virtualization.framework (which is the actual hypervisor). Built by Cirrus Labs. Near-native performance, no emulation. Treats VM images like containers: push/pull from OCI registries, build with Packer. Rosetta 2 support lets you run x86_64 Linux binaries inside ARM guests. Not a microVM (full macOS/Linux guests, not sub-second boot), but fills a crucial niche: macOS CI needs macOS VMs, and Tart is how the industry does it. Fair Source licensed (free for individuals + up to 100 server cores).',
+    boot: '', mem: '', loc: '', nested: '',
+    noStats: true,
+    detail: 'A CLI wrapper around Apple\'s native Virtualization.framework (which is the actual hypervisor). Built by Cirrus Labs. Near-native performance, no emulation. Treats VM images like containers: push/pull from OCI registries, build with Packer. Rosetta 2 support lets you run x86_64 Linux binaries inside ARM guests. Fills a crucial niche: macOS CI needs macOS VMs, and Tart is how the industry does it. Fair Source licensed (free for individuals + up to 100 server cores).',
     users: 'Atlassian, Figma, Snowflake, Mullvad, Expo, Cirrus Runners'
   },
 ];
@@ -1589,12 +1602,12 @@ vmms.forEach((vmm, i) => {
         ${vmm.nested === 'Yes' ? '<span class="vmm-tag" style="border-color:var(--green);color:var(--green)">nested</span>' : ''}
       </div>
     </div>
-    <div class="vmm-stats">
+    ${vmm.noStats ? '' : `<div class="vmm-stats">
       <div class="vmm-stat"><div class="vmm-stat-value">${vmm.boot}</div><div class="vmm-stat-label">Boot</div></div>
       <div class="vmm-stat"><div class="vmm-stat-value">${vmm.mem}</div><div class="vmm-stat-label">Overhead</div></div>
       <div class="vmm-stat"><div class="vmm-stat-value">${vmm.loc}</div><div class="vmm-stat-label">Lines</div></div>
       <div class="vmm-stat"><div class="vmm-stat-value">${vmm.nested}</div><div class="vmm-stat-label">Nested</div></div>
-    </div>
+    </div>`}
     <div class="vmm-detail">
       <p>${vmm.detail}</p>
       <div class="vmm-users"><strong>PRODUCTION USERS:</strong> ${vmm.users}</div>
