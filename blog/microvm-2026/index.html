@@ -813,7 +813,7 @@
 <div class="callout" style="margin-top:2rem;">
   <div class="callout-title">How to read this post</div>
   <p style="margin-bottom:0; font-size:0.9rem; line-height:1.7;">
-    <p>Grab a cup of coffee (or tea). </p>
+    Grab a cup of coffee (or tea).<br><br>
     <strong>Want the thesis:</strong> read the next two sections and the conclusion.<br>
     <strong>Choosing a VMM:</strong> jump to <em>Firecracker vs. Cloud Hypervisor</em>.<br>
     <strong>Building agent sandboxes:</strong> jump to <em>AI Agents Made Everyone Care</em>.<br>
@@ -940,7 +940,7 @@
     </div>
   </div>
   <div class="htl-detail" id="htl-detail">
-    Drag or click any dot to explore. Each generation tried to isolate more with less overhead and and each one eventually hit the limits of sharing a kernel.
+    Drag or click any dot to explore. Each generation tried to isolate more with less overhead and each one eventually hit the limits of sharing a kernel.
   </div>
 </div>
 
@@ -956,11 +956,11 @@
 
 <p>Firecracker asked: <em>what if we stripped all of that away?</em> No BIOS, no ACPI, no PCI, no USB...A total of five emulated devices, written in Rust, so entire categories of CVEs (buffer overflows, use-after-free, double-free) are eliminated at compile time.</p>
 
-<p>The result: the fastest VMM ever built, and not just in theory, but working tirelessly in practice. AWS runs I guess <strong>trillions</strong> of Lambda invocations per month on it. Every single one in its own VM.</p>
+<p>The result: the fastest VMM ever built, and not just in theory, but working tirelessly in practice. AWS runs <strong>trillions</strong> of Lambda invocations per month on it. Every single one in its own VM.</p>
 
 <p>But Firecracker wasn't built in a vacuum. Its origin traces back to Google's <strong>crosvm</strong>, the Chrome OS VMM, also written in Rust. Amazon used crosvm as a starting point, then built Firecracker. After Firecracker came Cloud Hypervisor, libkrun, Dragonball Sandbox, and others. All of them kept reinventing the same low-level components: KVM wrappers, virtio device models, memory management.</p>
 
-<p>This convergence on KVM wasn't accidental. AWS itself had launched EC2 on Xen in 2006, but <a href="https://www.brendangregg.com/blog/2017-11-29/aws-ec2-virtualization-2017.html">starting in 2017</a> migrated to the <a href="https://perspectives.mvdirona.com/2021/11/xen-on-nitro-aws-nitro-for-legacy-instances/">Nitro system</a>, a KVM-based hypervisor paired with custom Annapurna Labs silicon for network and storage I/O. All new EC2 instance types are Nitro-based; Xen instances are legacy. The same pattern played out across the industry: Google Cloud runs KVM, Azure moved to KVM-based Hyper-V, and even <a href="https://thenewstack.io/edera-adds-kvm-support/">Edera</a>, which spent years positioning Xen as the more secure choice, <a href="https://edera.dev/stories/kvm-support-is-coming-to-edera">announced KVM support just yesterday</a> because their customers demanded it. When the entire industry converges on a single hypervisor interface, building shared infrastructure on top of it becomes inevitable, and that's exactly what rust-vmm is.</p>
+<p>This convergence on KVM wasn't accidental. AWS itself had launched EC2 on Xen in 2006, but <a href="https://www.brendangregg.com/blog/2017-11-29/aws-ec2-virtualization-2017.html">starting in 2017</a> migrated to the <a href="https://perspectives.mvdirona.com/2021/11/xen-on-nitro-aws-nitro-for-legacy-instances/">Nitro system</a>, a KVM-based hypervisor paired with custom Annapurna Labs silicon for network and storage I/O. All new EC2 instance types are Nitro-based; Xen instances are legacy. The same pattern played out across the industry: Google Cloud runs KVM, Azure moved to KVM-based Hyper-V, and even <a href="https://thenewstack.io/edera-adds-kvm-support/">Edera</a>, which spent years positioning Xen as the more secure choice, <a href="https://edera.dev/stories/kvm-support-is-coming-to-edera">announced KVM support just yesterday around Kubecon</a> because their customers demanded it. When the entire industry converges on a single hypervisor interface, building shared infrastructure on top of it becomes inevitable, and that's exactly what rust-vmm is.</p>
 
 <p>The community recognized the waste. AWS, Intel, Google, Microsoft, Red Hat, Alibaba, Linaro, and others started collaborating on <a href="https://github.com/rust-vmm"><strong>rust-vmm</strong></a>, a shared ecosystem of Rust crates that any VMM project can use. The <a href="https://fosdem.org/2026/schedule/event/WEHLEY-rust-vmm_evolution_on_ecosystem_and_monorepo/">FOSDEM 2026 presentation</a> by Stefano Garzarella, Ruoqing He, and Patrick Roy showed just how mature this has become:</p>
 
@@ -1213,7 +1213,7 @@
 <p>  Thanks for reading this far. It was nice letting all of that out. 
 </p>
 
-<p><i>Disclaimer: I am a Staff SRE at Booking.com working on developer-facing CI infrastructure that runs in microVMs. All opinions are my own.</p></i>
+<p><i>Disclaimer: I am a Staff SRE at Booking.com working on developer-facing CI infrastructure that runs in microVMs. All opinions are my own.</i></p>
 
 
 
