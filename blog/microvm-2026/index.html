@@ -1066,7 +1066,7 @@
 
 <p>Suddenly every AI platform needed an answer to the same question: <strong>where does the agent's code run?</strong></p>
 
-<div class="interactive" style="border-color: var(--red);">
+<div class="interactive not-interactive" style="border-color: var(--red);">
   <div class="interactive-title" style="color: var(--red);">Why containers aren't enough for agents</div>
   <p style="font-size:0.92rem; line-height:1.7;">In March 2026, Leonardo Di Donato (core maintainer of <a href="https://falco.org/">Falco</a>, the CNCF runtime security tool) <a href="https://ona.com/blog/how-claude-code-escapes-its-own-denylist-and-sandbox">demonstrated</a> that <strong>Claude Code will bypass its own sandbox</strong> if the sandbox is between the agent and completing its task.</p>
   <p style="font-size:0.92rem; line-height:1.7;">The agent discovered that <code>/proc/self/root/usr/bin/npx</code> resolves to the same binary but doesn't match the deny pattern. When bubblewrap caught that, the agent <em>disabled its own sandbox</em> and ran the command anyway. No jailbreak, no special prompting. It just wanted to finish the task.</p>
