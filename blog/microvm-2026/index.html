@@ -35,7 +35,7 @@
     --bg-elevated: #eef1f5;
     --text: #1f2328;
     --text-muted: #656d76;
-    --text-dim: #8b949e;
+    --text-dim: #6b7280;
     --accent: #2563eb;
     --accent-bright: #2563eb;
     --green: #059669;
@@ -386,10 +386,10 @@
     background: var(--accent);
     color: #ffffff;
     border: none;
-    padding: 0.5rem 1.2rem;
-    border-radius: 6px;
+    padding: 0.7rem 1.8rem;
+    border-radius: 8px;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     cursor: pointer;
     font-family: var(--font-sans);
     transition: all 0.15s ease;
@@ -608,7 +608,7 @@
     letter-spacing: 0.06em;
     background: var(--bg-surface);
   }
-  td { font-family: var(--font-mono); font-size: 0.8rem; }
+  td { font-family: var(--font-sans); font-size: 0.85rem; }
   tr:hover td { background: var(--bg-surface); transition: background 0.15s; }
   tr:last-child td { border-bottom: none; }
 
@@ -925,6 +925,9 @@
 <p>I've been running Linux since I was a teenager, yet not until recently did I fully internalize what that sentence truly means.</p>
 
 <p>Following my last few months spent going deep on microVMs, building infrastructure on them and learning every VMM, every isolation approach, every trade-off in this space...I wanted to write a post as the guide I wish I'd had when I started (with a dozen of references, blog posts, presentations and READMEs, I dug up so much high quality content). This covers the VMMs, the shared Rust ecosystem powering them, the AI sandbox explosion, and where I believe it's all heading.</p>
+
+<p style="font-size:1.1rem; font-weight:600; color:var(--text); margin:1.5rem 0;">The microVM ecosystem didn't need to be invented for AI. It needed to be discovered.</p>
+
 <!-- WHAT THIS POST COVERS -->
 
 <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin:2rem 0;">
@@ -1160,9 +1163,9 @@
       <div class="bt-line bt-prompt">$ <span class="bt-cursor"></span></div>
     </div>
   </div>
-  <div style="display:flex; align-items:center; gap:1.2rem; margin-top:1rem;">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-top:1rem;">
     <button class="boot-btn" id="bt-btn" onclick="bootMicroVM()" style="margin-top:0">Boot microVM</button>
-    <div>
+    <div style="text-align:right;">
       <div class="boot-timer-display" id="bt-timer">&mdash;</div>
       <div class="boot-timer-label">boot time</div>
     </div>
@@ -1666,12 +1669,9 @@ const bootDmesg = [
   [0.000000, 'Linux version 6.18.1-lts (builder@ci) (gcc 14.2) #1 SMP PREEMPT'],
   [0.000000, 'Command line: console=ttyS0 reboot=k panic=1 ... ip=172.30.0.11'],
   [0.027572, 'smp: Brought up 1 node, 4 CPUs'],
-  [0.027572, 'smpboot: Total of 4 processors activated (28756.64 BogoMIPS)'],
   [0.027651, 'Memory: 8220824K/8388220K available (10086K kernel code)'],
   [0.028630, 'devtmpfs: initialized'],
   [0.045508, 'clocksource: Switched to clocksource kvm-clock'],
-  [0.053770, 'kvm_amd: Nested Virtualization enabled'],
-  [0.053771, 'kvm_amd: Nested Paging enabled'],
   [0.078631, 'virtio_blk virtio1: [vda] 419430400 512-byte logical blocks (200 GiB)'],
   [0.103556, 'IP-Config: Complete:'],
   [0.103558, '     device=eth0, ipaddr=172.30.0.11, gw=172.30.0.10'],
@@ -1693,10 +1693,10 @@ function bootMicroVM() {
 
   const cmd = `cloud-hypervisor \\
   --kernel vmlinux-6.18-lts \\
-  --cpus boot=4,nested=on,topology=2:2:1:1 \\
-  --memory-zone size=8192M \\
+  --cpus boot=4,topology=2:2:1:1 \\
+  --memory size=8192M \\
   --disk path=alpine-rootfs.img \\
-  --net tap=vmtap0,mac=AA:FC:00:00:00:0B \\
+  --net tap=vmtap0,mac=AA:BB:00:00:00:0B \\
   --serial tty --console off`;
   const SCALE = 8;
   const TARGET = 106;
@@ -1765,7 +1765,7 @@ function bootMicroVM() {
   function phase3() {
     addLine('', '');
     addLine('Welcome to microvm-podman01 (kernel 6.18.1-lts)', 'bt-motd');
-    addLine('  4 vCPUs | 8G RAM | nested=on | Isolation: AMD-V/NPT', 'bt-motd');
+    addLine('  4 vCPUs | 8G RAM | Isolation: AMD-V/NPT', 'bt-motd');
     addLine('', '');
     setTimeout(phase4, 400);
   }
@@ -1803,13 +1803,8 @@ function bootMicroVM() {
       addLine('    Thread(s) per core:  2', 'bt-dmesg');
       addLine('    Core(s) per socket:  2', 'bt-dmesg');
       addLine('    Socket(s):           1', 'bt-dmesg');
-      addLine('    BogoMIPS:            7189.16', 'bt-dmesg');
-      addLine('Virtualization features:', '');
-      addLine('  Virtualization:        AMD-V', 'bt-ok');
-      addLine('  Hypervisor vendor:     KVM', 'bt-ok');
-      addLine('  Virtualization type:   full', 'bt-ok');
       setTimeout(() => {
-        typeVmCmd('docker run alpine:3.22 echo "hello from a container inside a VM"', () => {
+        typeVmCmd('docker run --rm -it alpine:3.22 echo "hello from a container inside a VM"', () => {
           addLine('Resolving "alpine" using unqualified-search registries (/etc/containers/registries.conf)', 'bt-dmesg');
           addLine('Trying to pull docker.io/library/alpine:3.22...', 'bt-dmesg');
           addLine('Getting image source signatures', 'bt-dmesg');
