@@ -220,6 +220,9 @@
   @media (max-width: 640px) {
     .isolation-grid { grid-template-columns: 1fr; }
     .hero h1 { font-size: 2.2rem; }
+    .htl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .htl-track { min-width: 700px; }
+    .htl-dot { min-width: 55px; }
   }
   .isolation-col h4 {
     font-size: 0.95rem;
@@ -1189,9 +1192,9 @@
 
 <div class="footnote">
   <p><strong>Further reading:</strong></p>
-  <p><strong>VMMs and runtimes:</strong> <a href="https://firecracker-microvm.github.io/">Firecracker</a> (<a href="https://aws.amazon.com/blogs/aws/firecracker-lightweight-virtualization-for-serverless-computing/">Jeff Barr's launch post</a>) &bull; <a href="https://www.cloudhypervisor.org/">Cloud Hypervisor</a> (<a href="https://www.cloudhypervisor.org/blog/v51-0/">v51.0 release</a>) &bull; <a href="https://github.com/rust-vmm">rust-vmm</a> &bull; <a href="https://qemu.readthedocs.io/en/latest/system/i386/microvm.html">QEMU microvm</a> &bull; <a href="https://github.com/containers/libkrun">libkrun</a> &bull; <a href="https://katacontainers.io/">Kata Containers</a> &bull; <a href="https://edera.dev/">Edera</a> &bull; <a href="https://lima-vm.io/">Lima</a> &bull; <a href="https://tart.run/">Tart</a></p>
+  <p><strong>VMMs and runtimes:</strong> <a href="https://firecracker-microvm.github.io/">Firecracker</a> (<a href="https://aws.amazon.com/blogs/aws/firecracker-lightweight-virtualization-for-serverless-computing/">Jeff Barr's launch post</a>) &bull; <a href="https://www.cloudhypervisor.org/">Cloud Hypervisor</a> (<a href="https://www.cloudhypervisor.org/blog/cloud-hypervisor-v51.0-released/">v51.0 release</a>) &bull; <a href="https://github.com/rust-vmm">rust-vmm</a> &bull; <a href="https://www.qemu.org/docs/master/system/i386/microvm.html">QEMU microvm</a> &bull; <a href="https://github.com/containers/libkrun">libkrun</a> &bull; <a href="https://katacontainers.io/">Kata Containers</a> &bull; <a href="https://edera.dev/">Edera</a> &bull; <a href="https://lima-vm.io/">Lima</a> &bull; <a href="https://tart.run/">Tart</a></p>
   <p><strong>AI sandboxes:</strong> <a href="https://sprites.dev/">Sprites.dev</a> &bull; <a href="https://e2b.dev/">E2B</a> &bull; <a href="https://github.com/zerocore-ai/microsandbox">Microsandbox</a> &bull; <a href="https://github.com/jingkaihe/matchlock">Matchlock</a> &bull; <a href="https://ona.com/">Ona</a> &bull; <a href="https://docs.docker.com/ai/sandboxes/">Docker Sandboxes</a></p>
-  <p><strong>Curated lists:</strong> <a href="https://github.com/nicholasgasior/awesome-microvm">awesome-microvm</a> &bull; <a href="https://github.com/iximiuz/awesome-container-tinkering">Container Runtimes and Related Tools (iximiuz)</a></p>
+  <p><strong>Curated lists:</strong> <a href="https://github.com/infracloudio/awesome-microvm">awesome-microvm</a> &bull; <a href="https://github.com/iximiuz/awesome-container-tinkering">Container Runtimes and Related Tools (iximiuz)</a></p>
   <p><strong>Jessie Frazelle (2018, ahead of her time):</strong> <a href="https://blog.jessfraz.com/post/containers-zones-jails-vms/">Setting the Record Straight: containers vs. Zones vs. Jails vs. VMs</a> &bull; <a href="https://blog.jessfraz.com/post/hard-multi-tenancy-in-kubernetes/">Hard Multi-Tenancy in Kubernetes</a> &bull; <a href="https://blog.jessfraz.com/post/getting-towards-real-sandbox-containers/">Getting Towards Real Sandbox Containers</a> &bull; <a href="https://blog.jessfraz.com/post/containers-security-and-echo-chambers/">Containers, Security, and Echo Chambers</a></p>
   <p><strong>Deep dives:</strong> <a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a> &bull; <a href="https://www.usenix.org/publications/loginonline/freebsd-firecracker">FreeBSD on Firecracker (Colin Percival)</a> &bull; <a href="https://ona.com/blog/how-claude-code-escapes-its-own-denylist-and-sandbox">How Claude Code escapes its own sandbox (Ona/Veto)</a> &bull; <a href="https://blog.alexellis.io/how-to-run-firecracker-without-kvm-on-regular-cloud-vms/">Firecracker without KVM via PVM (Alex Ellis)</a> &bull; <a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Firecracker on OCI: VM vs bare metal (Oracle)</a> &bull; <a href="https://code.claude.com/docs/en/sandboxing">Claude Code sandboxing docs</a> &bull; <a href="https://www.anthropic.com/engineering/claude-code-sandboxing">Anthropic: Beyond permission prompts</a></p>
   <p style="margin-top:1rem;"><em>Line counts verified with <code>cloc</code> on fresh git clones (March 2026). All CVEs linked to their NVD or advisory pages. Performance claims sourced from the <a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a> and <a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Oracle's OCI benchmarks</a>.</em></p>
@@ -1277,20 +1280,20 @@ const vmms = [
     users: 'Fly.io (GPU), Kata Containers, Ubicloud, Northflank'
   },
   {
-    name: '<a href="https://qemu.readthedocs.io/en/latest/system/i386/microvm.html">QEMU (+ microvm)</a>',
+    name: '<a href="https://www.qemu.org/docs/master/system/i386/microvm.html">QEMU (+ microvm)</a>',
     lang: 'c',
     boot: '~0.4-1.2s',
     mem: '100s MiB',
     loc: '2M',
     nested: 'Yes',
-    detail: 'The venerable general-purpose VMM. Supports every architecture, every device, and has the most mature VFIO passthrough. Default backend for Kata Containers and KubeVirt. Notably, QEMU now has a <code>microvm</code> machine type <a href="https://qemu.readthedocs.io/en/latest/system/i386/microvm.html">inspired by Firecracker</a>: no PCI, no ACPI, up to 8 virtio-mmio devices, paired with qboot for minimal firmware. With all legacy disabled, QEMU microvm approaches Firecracker boot times. Ubuntu ships a dedicated <code>qemu-system-x86-microvm</code> binary.',
+    detail: 'The venerable general-purpose VMM. Supports every architecture, every device, and has the most mature VFIO passthrough. Default backend for Kata Containers and KubeVirt. Notably, QEMU now has a <code>microvm</code> machine type <a href="https://www.qemu.org/docs/master/system/i386/microvm.html">inspired by Firecracker</a>: no PCI, no ACPI, up to 8 virtio-mmio devices, paired with qboot for minimal firmware. With all legacy disabled, QEMU microvm approaches Firecracker boot times. Ubuntu ships a dedicated <code>qemu-system-x86-microvm</code> binary.',
     users: 'Kata Containers (default), KubeVirt, libvirt, Proxmox, OpenStack, Lima'
   },
   {
     name: '<a href="https://gvisor.dev/">gVisor (runsc)</a> *not a VMM',
     lang: 'go',
     boot: '~50-100ms',
-    mem: '10-50 MB',
+    mem: '10-50 MiB',
     loc: '~500K',
     nested: 'N/A',
     detail: '<strong>Not a VMM.</strong> A user-space application kernel written in Go that intercepts syscalls and re-implements them in a memory-safe process. No hypervisor, no guest kernel. Faster startup and lower overhead than microVMs, but weaker isolation (no hardware boundary). The "systrap" mode drastically reduced overhead. Best for GPU workloads (via nvproxy, used by Modal) and semi-trusted code at high density.',
