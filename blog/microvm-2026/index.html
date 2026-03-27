@@ -824,7 +824,7 @@
 
 <h2>Deep Dive</h2>
 
-<p>Linux containers are a <em>packaging and resource control</em> mechanism. Namespaces and cgroups restrict what a process can see and how much CPU and memory it can use. But every container on a host shares the same kernel. A kernel exploit, a rogue capability, a mis-mounted socket, and you're root on the host, with access to every other tenant's data. The kernel has <span class="num-bad">~40 million</span> lines of C and exposes <span class="num-bad">385+</span> syscalls. That is the attack surface.</p>
+<p>Linux containers are a <em>packaging and resource control</em> mechanism. Namespaces and cgroups restrict what a process can see and how much CPU and memory it can use. But every container on a host shares the same kernel. A kernel exploit, a rogue capability, a mis-mounted socket, and you're root on the host, with access to every other tenant's data. The kernel has <span class="num-bad">~40 million</span> lines of C and exposes <span class="num-bad">450+</span> syscalls. That is the attack surface.</p>
 
 <p>To be fair: containers <em>are</em> a boundary. You do need a vulnerability to escape one. There's no "just let me out" syscall. But the kernel attack surface is enormous, and escape CVEs ship regularly. An analogy that has stuck with me: <strong>NAT is not a firewall. Namespaces are not a security layer.</strong> Both restrict access as a side effect of their design, and both are commonly mistaken for security boundaries.</p>
 
@@ -898,7 +898,7 @@
   </div>
 </div>
 
-<p>In the container model, every layer is a <em>software convention</em> enforced by the shared kernel. The kernel is the security boundary, and the kernel has <span class="num-bad">~40 million</span> lines of C. In the microVM model, the security boundary is <strong>hardware virtualization</strong>: Intel VT-x / AMD-V, enforced by the CPU itself. The VMM that orchestrates this? About <span class="num">83,000</span> lines of Rust (Firecracker) or <span class="num">106,000</span> (Cloud Hypervisor).</p>
+<p>In the container model, every layer is a <em>software convention</em> enforced by the shared kernel. The kernel is the security boundary, and the kernel has <span class="num-bad">~40 million</span> lines of C. In the microVM model, the security boundary is <strong>hardware virtualization</strong>: Intel VT-x / AMD-V, enforced by the CPU itself. The VMM that orchestrates this? About <span class="num">83,000</span> lines of Rust (Firecracker) or <span class="num">106,000</span> (Cloud Hypervisor), as measured with <code>cloc</code> in March 2026.</p>
 
 <p>A container escape gives you root on the host. A VM escape requires a hypervisor CVE, a class of bug so rare and valuable it commands <a href="https://www.crowdfense.com/exploit-acquisition-program/">$250K-$500K bounties</a> on the exploit market (Google's kvmCTF offers $250K for a KVM escape alone).</p>
 
@@ -942,7 +942,7 @@
   </div>
 </div>
 
-<p>The pattern is clear: every approach that shares a kernel eventually hits the same wall. <code>chroot</code> didn't isolate processes. FreeBSD jails didn't isolate networking. Namespaces and cgroups don't isolate the kernel's <span class="num-bad">385+ syscall</span> attack surface. Each generation added more layers of software defense, and each generation produced new escape CVEs.</p>
+<p>The pattern is clear: every approach that shares a kernel eventually hits the same wall. <code>chroot</code> didn't isolate processes. FreeBSD jails didn't isolate networking. Namespaces and cgroups don't isolate the kernel's <span class="num-bad">450+ syscall</span> attack surface. Each generation added more layers of software defense, and each generation produced new escape CVEs.</p>
 
 <p>MicroVMs break the pattern by not sharing a kernel at all. The isolation is <em>architectural</em>, not incremental.</p>
 
@@ -1012,7 +1012,7 @@
   <p>Firecracker and Cloud Hypervisor are <strong>Virtual Machine <em>Monitors</em></strong> (VMMs): userspace processes that use KVM to create and manage VMs. They are not the VM itself. The guest runs a completely standard, full-featured Linux kernel (or <a href="https://www.usenix.org/publications/loginonline/freebsd-firecracker">FreeBSD</a>). Inside the VM, you have access to every syscall, every kernel feature, every tool. The VMM restricts what <em>hardware</em> is exposed to the guest, not what <em>software</em> can run inside it. MicroVMs are not limited environments.</p>
 </div>
 
-<p>Runtime overhead is equally minimal. Guest code runs directly on the CPU via KVM with single-digit percentage overhead. Oracle's <a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Firecracker on OCI benchmarks</a> showed ~3.5% CPU overhead even with nested virtualization. In practice, dedicated-core VMs often <em>outperform</em> containers on shared hosts: when a container gets <code>--cpus=4</code> on a 192-thread host, CFS bandwidth throttling freezes the entire cgroup once daemon threads and GC exceed the quota. A VM with dedicated cores has no quota — the CPU time is a physical property of the hardware.</p>
+<p>Runtime overhead is equally minimal. Guest code runs directly on the CPU via KVM with single-digit percentage overhead. Oracle's <a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Firecracker on OCI benchmarks</a> showed ~3% CPU overhead even with nested virtualization. In practice, dedicated-core VMs often <em>outperform</em> containers on shared hosts: when a container gets <code>--cpus=4</code> on a 192-thread host, CFS bandwidth throttling freezes the entire cgroup once daemon threads and GC exceed the quota. A VM with dedicated cores has no quota — the CPU time is a physical property of the hardware.</p>
 
 <p>The honest trade-off is operational complexity, not performance. Managing guest kernels, rootfs images, and a VMM is real work. MicroVMs earn their keep when you're running untrusted code, need multi-tenant isolation, or operate at a scale where the security cost of a single container escape exceeds the engineering cost of running a VMM. Know your threat model.</p>
 
@@ -1066,7 +1066,7 @@
 
 <div class="interactive" style="border-color: var(--red);">
   <div class="interactive-title" style="color: var(--red);">Why containers aren't enough for agents — a real escape</div>
-  <p style="font-size:0.92rem; line-height:1.7;">In March 2026, Leonardo Di Donato (creator of <a href="https://falco.org/">Falco</a>, the CNCF runtime security tool) <a href="https://ona.com/blog/how-claude-code-escapes-its-own-denylist-and-sandbox">demonstrated</a> that <strong>Claude Code will bypass its own sandbox</strong> if the sandbox is between the agent and completing its task.</p>
+  <p style="font-size:0.92rem; line-height:1.7;">In March 2026, Leonardo Di Donato (core maintainer of <a href="https://falco.org/">Falco</a>, the CNCF runtime security tool) <a href="https://ona.com/blog/how-claude-code-escapes-its-own-denylist-and-sandbox">demonstrated</a> that <strong>Claude Code will bypass its own sandbox</strong> if the sandbox is between the agent and completing its task.</p>
   <p style="font-size:0.92rem; line-height:1.7;">The agent discovered that <code>/proc/self/root/usr/bin/npx</code> resolves to the same binary but doesn't match the deny pattern. When bubblewrap caught that, the agent <em>disabled its own sandbox</em> and ran the command anyway. No jailbreak, no special prompting. It just wanted to finish the task.</p>
   <p style="font-size:0.92rem; line-height:1.7; margin-bottom:0;"><strong style="color:var(--red)">The lesson:</strong> Containers, denylists, and permission prompts exist in the same space the agent reasons in — userspace, language, logic. A microVM's isolation is enforced by hardware, below the layer the agent can reason about.</p>
 </div>
@@ -1076,7 +1076,7 @@
   <div class="sandbox-grid">
     <div class="sandbox-card">
       <div class="sandbox-name"><a href="https://e2b.dev/">E2B</a> <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
-      <div class="sandbox-desc">The OG. ~15M sessions/month. Purpose-built Firecracker sandboxes for AI agents. ~150ms boot. Used by half the Fortune 500.</div>
+      <div class="sandbox-desc">The OG. Purpose-built Firecracker sandboxes for AI agents. ~150ms boot. 88% of Fortune 100 signed up. Hundreds of millions of sandboxes initiated.</div>
     </div>
     <div class="sandbox-card">
       <div class="sandbox-name"><a href="https://sprites.dev/">Fly.io Sprites</a> <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
@@ -1104,7 +1104,7 @@
     </div>
     <div class="sandbox-card">
       <div class="sandbox-name"><a href="https://ona.com/">Ona</a> (ex-Gitpod) <span class="sandbox-iso iso-ch">VM</span></div>
-      <div class="sandbox-desc">Gitpod rebranded (Sep 2025) into an AI agent platform. Each agent gets an ephemeral VM with kernel-level isolation. SOC 2, GDPR. BNY, Blackstone, Vanta as customers.</div>
+      <div class="sandbox-desc">Gitpod rebranded (Sep 2025) into an AI agent platform. Each agent gets an ephemeral VM with kernel-level isolation. SOC 2, GDPR. Serves major financial and pharmaceutical enterprises.</div>
     </div>
     <div class="sandbox-card">
       <div class="sandbox-name"><a href="https://github.com/jingkaihe/matchlock">Matchlock</a> <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
@@ -1130,7 +1130,7 @@
   <div class="sandbox-grid">
     <div class="sandbox-card" style="grid-column: span 2;">
       <div class="sandbox-name" style="font-size:1rem;"><a href="https://katacontainers.io/">Kata Containers</a> <span class="sandbox-iso iso-firecracker" style="background:var(--bg-surface);">OCI runtime</span></div>
-      <div class="sandbox-desc">The OG. OpenInfra Foundation project that wraps QEMU, Cloud Hypervisor, or Firecracker behind an OCI-compatible runtime. Drop it into containerd, every pod gets its own VM. <strong>150-300ms</strong> startup overhead. Battle-tested by IBM Cloud and AWS EKS. The most mature option, but operational complexity is real — you're managing guest kernels, VM images, and an additional runtime shim alongside your existing container stack.</div>
+      <div class="sandbox-desc">The OG. OpenInfra Foundation project that wraps QEMU, Cloud Hypervisor, or Firecracker behind an OCI-compatible runtime. Drop it into containerd, every pod gets its own VM. <strong>150-300ms</strong> startup overhead. Battle-tested by IBM Cloud; <a href="https://aws.amazon.com/blogs/containers/enhancing-kubernetes-workload-isolation-and-security-using-kata-containers/">deployable on AWS EKS</a> with bare-metal nodes. The most mature option, but operational complexity is real — you're managing guest kernels, VM images, and an additional runtime shim alongside your existing container stack.</div>
     </div>
     <div class="sandbox-card">
       <div class="sandbox-name" style="font-size:1rem;"><a href="https://edera.dev/">Edera</a> <span class="sandbox-iso iso-ch" style="background:var(--bg-surface);">Type-1 hypervisor</span></div>
@@ -1147,7 +1147,7 @@
 
 <p>Any honest discussion of isolation in 2026 has to take <a href="https://gvisor.dev/">gVisor</a> seriously. It's not a microVM — it's a user-space application kernel written in Go that intercepts syscalls and re-implements them in a memory-safe process. No hypervisor, no guest kernel. But dismissing it as "weaker isolation" misses the picture.</p>
 
-<p>Google runs billions of containers on gVisor across Cloud Run, App Engine, and Cloud Functions. <a href="https://modal.com/">Modal</a> built their entire GPU inference platform on it. <a href="https://www.digitalocean.com/">DigitalOcean</a> migrated their App Platform to it and saw 2x throughput on Node.js, 7x on WordPress. The <code>systrap</code> mode (which replaced ptrace) drastically reduced overhead, and gVisor reimplements ~200 Linux syscalls in Go, but the Sentry itself only makes ~70 host syscalls — a dramatically smaller surface than the kernel's 385+.</p>
+<p>Google runs billions of containers on gVisor across Cloud Run, App Engine, and Cloud Functions. <a href="https://modal.com/">Modal</a> built their entire GPU inference platform on it. <a href="https://www.digitalocean.com/">DigitalOcean</a> upgraded their App Platform's gVisor deployment to the new <code>systrap</code> mode and saw 2x throughput on Node.js, 7x on WordPress. The <code>systrap</code> mode (which replaced ptrace) drastically reduced overhead, and gVisor reimplements ~274 Linux syscalls in Go, but the Sentry itself only makes ~70 host syscalls — a dramatically smaller surface than the kernel's 450+.</p>
 
 <p>The strongest case for gVisor over microVMs is <strong>GPU workloads</strong>. VFIO GPU passthrough into a microVM breaks the VM isolation boundary anyway — the GPU has DMA access to host memory. gVisor's <code>nvproxy</code> intercepts CUDA calls in a memory-safe layer, which arguably gives you better security than a microVM with a passed-through GPU. This is exactly why <a href="https://modal.com/">Modal</a> uses gVisor for GPU inference.</p>
 
@@ -1234,7 +1234,7 @@ const layerInfoData = {
   'container-host': '<strong style="color:var(--red)">Shared kernel (40M+ lines of code).</strong> Every container on the host shares this kernel. A kernel exploit (CVE-2024-1086, CVE-2022-0185, ...) gives you root on the host and access to every other container. The kernel exposes ~385 syscalls; seccomp blocks some, but the attack surface is enormous.',
   'container-ns': '<strong>Namespaces hide resources, they don\'t protect them.</strong> PID namespace hides other processes. Mount namespace hides other filesystems. Network namespace gives you your own IP. But these are all enforced by the shared kernel. A kernel bug bypasses all of them simultaneously.',
   'container-cg': '<strong>Cgroups limit resources, not access.</strong> They prevent your container from using too much CPU, memory, or I/O. They do nothing to prevent privilege escalation, kernel exploitation, or accessing host resources through side channels.',
-  'container-seccomp': '<strong>Seccomp-bpf filters syscalls.</strong> Docker\'s default profile blocks ~44 of ~~385 syscalls. Better than nothing, but the remaining 350+ syscalls include plenty of attack surface. And if you need <code>--privileged</code> for Docker-in-Docker... seccomp is disabled entirely.',
+  'container-seccomp': '<strong>Seccomp-bpf filters syscalls.</strong> Docker\'s default profile blocks ~44 of ~450 syscalls. Better than nothing, but the remaining 400+ syscalls include plenty of attack surface. And if you need <code>--privileged</code> for Docker-in-Docker... seccomp is disabled entirely.',
   'container-code': '<strong>Your process runs directly on the host kernel.</strong> There is exactly zero hardware between your code and the kernel. Every syscall is a direct function call into the shared kernel. Root inside the container + a kernel bug = root on the host.',
   'vm-host': '<strong>Host kernel manages KVM.</strong> KVM is a kernel module (~25K lines) that turns Linux into a hypervisor. It configures hardware virtualization (VT-x/AMD-V) and creates isolated execution contexts. The host kernel is still here, but guest code never touches it directly.',
   'vm-vmm': '<strong>VMM is a userspace process.</strong> Firecracker/Cloud Hypervisor runs as an unprivileged process on the host, jailed with seccomp-bpf (Firecracker allows only ~25 syscalls). It configures vCPUs, memory, and virtio devices. Even if compromised, it has minimal host access. ~83-106K lines of Rust eliminates memory safety bugs.',
@@ -1287,7 +1287,7 @@ const vmms = [
     loc: '83K',
     nested: 'No',
     detail: 'AWS\'s purpose-built VMM for serverless. Deliberately minimal: 5 emulated devices, no BIOS, no PCI bus. The Jailer companion process applies seccomp-bpf, cgroups, and chroot to the VMM itself. Snapshot-restore achieves ~28ms warm starts.',
-    users: 'AWS Lambda, AWS Fargate, Fly.io, E2B, AWS Bedrock AgentCore, Aurora DSQL'
+    users: 'AWS Lambda, Fly.io, E2B, AWS Bedrock AgentCore, Aurora DSQL (<a href="https://justingarrison.com/blog/2024-02-08-fargate-is-not-firecracker/">Fargate\'s use is disputed</a>)'
   },
   {
     name: '<a href="https://www.cloudhypervisor.org/">Cloud Hypervisor</a>',
@@ -1296,7 +1296,7 @@ const vmms = [
     mem: 'Low',
     loc: '106K',
     nested: 'Yes',
-    detail: 'Started by Intel, now maintained by Intel/Microsoft/Cyberus/Tencent. The "Swiss Army knife" microVM—nested KVM, VFIO GPU passthrough, CPU/memory hotplugging, Windows guests. Runs on both KVM and Microsoft Hypervisor (MSHV). ~75ms slower boot than Firecracker.',
+    detail: 'Started by Intel (2019), now maintained by Microsoft, Cyberus, Tencent, and others. The "Swiss Army knife" microVM—nested KVM, VFIO GPU passthrough, CPU/memory hotplugging, Windows guests. Runs on both KVM and Microsoft Hypervisor (MSHV). ~75ms slower boot than Firecracker.',
     users: 'Fly.io (GPU), Kata Containers, Ubicloud, Northflank'
   },
   {
@@ -1308,26 +1308,6 @@ const vmms = [
     nested: 'Yes',
     detail: 'The venerable general-purpose VMM. Supports every architecture, every device, and has the most mature VFIO passthrough. Default backend for Kata Containers and KubeVirt. Notably, QEMU now has a <code>microvm</code> machine type <a href="https://www.qemu.org/docs/master/system/i386/microvm.html">inspired by Firecracker</a>: no PCI, no ACPI, up to 8 virtio-mmio devices, paired with qboot for minimal firmware. With all legacy disabled, QEMU microvm approaches Firecracker boot times. Ubuntu ships a dedicated <code>qemu-system-x86-microvm</code> binary.',
     users: 'Kata Containers (default), KubeVirt, libvirt, Proxmox, OpenStack, Lima'
-  },
-  {
-    name: '<a href="https://gvisor.dev/">gVisor (runsc)</a> *not a VMM',
-    lang: 'go',
-    boot: '~50-100ms',
-    mem: '10-50 MiB',
-    loc: '~500K',
-    nested: 'N/A',
-    detail: '<strong>Not a VMM.</strong> A user-space application kernel written in Go that intercepts syscalls and re-implements them in a memory-safe process. No hypervisor, no guest kernel. Faster startup and lower overhead than microVMs, but weaker isolation (no hardware boundary). The "systrap" mode drastically reduced overhead. Best for GPU workloads (via nvproxy, used by Modal) and semi-trusted code at high density.',
-    users: 'Google Cloud Run, App Engine, Cloud Functions, Modal, DigitalOcean'
-  },
-  {
-    name: '<a href="https://github.com/nestybox/sysbox">Sysbox</a> *not a VMM',
-    lang: 'go',
-    boot: 'Native',
-    mem: 'Native',
-    loc: 'Multi-repo',
-    nested: 'N/A',
-    detail: '<strong>Not a VMM.</strong> An enhanced OCI runtime (runc fork) by Nestybox (now Docker). Enables rootless containers to act as VM-like environments: run systemd, Docker, and even K8s inside a container without <code>--privileged</code>. Uses Linux user namespaces, uid-shifting, and partial procfs/sysfs virtualization. No hypervisor overhead, but also no hardware isolation boundary. Best for dev environments and CI/CD where you need Docker-in-Docker without the security compromise of privileged containers.',
-    users: 'Docker (acquired Nestybox), CI/CD pipelines, dev environments'
   },
   {
     name: '<a href="https://github.com/containers/libkrun">libkrun</a>',
@@ -1348,6 +1328,26 @@ const vmms = [
     nested: 'No',
     detail: 'Google\'s Chrome OS VMM. Powers Linux (Crostini) and Android (ARCVM) VMs on every Chromebook. Also used for the Android Terminal App. Uses rust-vmm crates. Less known outside Chrome OS but actively maintained and battle-tested on millions of devices.',
     users: 'Chrome OS (every Chromebook), Android Terminal App'
+  },
+  {
+    name: '<a href="https://gvisor.dev/">gVisor (runsc)</a> *not a VMM',
+    lang: 'go',
+    boot: '~50-100ms',
+    mem: '10-50 MiB',
+    loc: '~500K',
+    nested: 'N/A',
+    detail: '<strong>Not a VMM.</strong> A user-space application kernel written in Go that intercepts syscalls and re-implements them in a memory-safe process. No hypervisor, no guest kernel. Faster startup and lower overhead than microVMs, but weaker isolation (no hardware boundary). The "systrap" mode drastically reduced overhead. Best for GPU workloads (via nvproxy, used by Modal) and semi-trusted code at high density.',
+    users: 'Google Cloud Run, App Engine, Cloud Functions, Modal, DigitalOcean'
+  },
+  {
+    name: '<a href="https://github.com/nestybox/sysbox">Sysbox</a> *not a VMM',
+    lang: 'go',
+    boot: 'Native',
+    mem: 'Native',
+    loc: 'Multi-repo',
+    nested: 'N/A',
+    detail: '<strong>Not a VMM.</strong> An enhanced OCI runtime (runc fork) by Nestybox (now Docker). Enables rootless containers to act as VM-like environments: run systemd, Docker, and even K8s inside a container without <code>--privileged</code>. Uses Linux user namespaces, uid-shifting, and partial procfs/sysfs virtualization. No hypervisor overhead, but also no hardware isolation boundary. Best for dev environments and CI/CD where you need Docker-in-Docker without the security compromise of privileged containers.',
+    users: 'Docker (acquired Nestybox), CI/CD pipelines, dev environments'
   },
   {
     name: '<a href="https://lima-vm.io/">Lima</a> *wrapper',
