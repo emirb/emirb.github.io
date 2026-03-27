@@ -11,7 +11,7 @@
 - infoq.cn, August 2019: [In pursuit of speed, we tested all CDNs worldwide (Chinese)](https://www.infoq.cn/article/N5TEFmDbUVdxkpF8f_hQ)
 - RIPE Labs, August 2019: [Analysing global CDN performance](https://labs.ripe.net/Members/emirb/analysing-global-cdn-performance)
 - APNIC, August 2019: [Analysing global CDN performance](https://blog.apnic.net/2019/08/28/analysing-global-cdn-performance/)
-- The state of MicroVM isolation in 2026: [https://emirb.github.io/blog/microvm-2026/](https://emirb.github.io/blog/microvm-2026/)
+- March 2026: [The state of MicroVM isolation in 2026](https://emirb.github.io/blog/microvm-2026/)
 
 ## Talks
 - RIPE SEE 1, September 2011: [Starting An Internet Exchange Point: Lessons learnt](https://meduza.carnet.hr/index.php/media/watch/6294)
