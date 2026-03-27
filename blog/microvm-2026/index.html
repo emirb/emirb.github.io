@@ -236,6 +236,8 @@
     #timeline-history .htl-detail { display: none !important; }
     #timeline-history::before { display: none !important; }
     .htl-mobile { display: block !important; }
+    .interactive, .not-interactive { padding: 1rem; margin-left: -0.5rem; margin-right: -0.5rem; }
+    .container { padding: 0 1rem; }
   }
   .isolation-col h4 {
     font-size: 0.95rem;
@@ -876,7 +878,7 @@
 <header class="hero">
   <p style="font-size:0.82rem; color:var(--accent); margin-bottom:0.6rem; letter-spacing:0.06em; text-transform:uppercase; font-weight:700;">The State of MicroVM Isolation in 2026</p>
   <h1>Your Container Is&nbsp;Not&nbsp;a&nbsp;Sandbox</h1>
-  <p class="subtitle">The microVM ecosystem was battle-tested long before agentic AI arrived. Now every platform needs it. A deep dive into VMMs, the shared Rust crate ecosystem, AI sandboxes, and where it's all heading.</p>
+  <p class="subtitle">The microVM ecosystem was battle-tested long before agentic AI created the demand. Now it's thriving, diverse, and moving fast. This post covers every VMM, the shared Rust crate ecosystem, a dozen AI sandbox platforms and honest trade-offs.</p>
   <p class="meta">March 27, 2026 &middot; 25 min read &middot; Emir Beganovi&#263; &middot; <a href="https://github.com/emirb">@emirb</a></p>
 </header>
 
@@ -1608,7 +1610,7 @@ const historyData = [
   { year: '1979', name: 'chroot', color: 'var(--text-dim)', info: '<strong>chroot (1979)</strong> — The original filesystem isolation. Changed the apparent root directory for a process. No process isolation, no resource limits. Trivially escapable with a second chroot call. But it planted the seed: <em>what if processes couldn\'t see the whole system?</em>' },
   { year: '1999', name: 'Jails', color: 'var(--text-muted)', info: '<strong>FreeBSD Jails (1999)</strong> — First real attempt at OS-level virtualization. Isolated filesystem, process table, and networking. Still shared the kernel, but far more complete than chroot. Influenced everything that followed.' },
   { year: '2004', name: 'Zones', color: 'var(--text-muted)', info: '<strong>Solaris Containers/Zones (2004)</strong> — Sun\'s take on OS virtualization. Resource controls, isolated networking, and a proper security boundary within a single Solaris kernel. Elegant but tied to a dying OS.' },
-  { year: '2005', name: 'OpenVZ', color: 'var(--text-muted)', info: '<strong>OpenVZ (2005)</strong> — Linux container virtualization via a patched kernel. Popular with hosting providers for VPS. Required kernel patches that were never merged upstream, which limited adoption.' },
+  { year: '2005', name: 'OpenVZ', color: 'var(--text-muted)', info: '<strong>OpenVZ (2005)</strong> — SWsoft (later Parallels, then Virtuozzo Inc.) open-sources the core of their commercial Virtuozzo product. Massive kernel patch set for OS-level virtualization. Became <em>the</em> budget VPS technology for nearly a decade — every cheap hosting provider ran OpenVZ. Patches were too large and monolithic for upstream; the kernel community chose the incremental namespaces + cgroups path instead. OpenVZ developers (Pavel Emelyanov and others) contributed significantly to that upstream work.' },
   { year: '2006', name: 'cgroups', color: 'var(--orange)', info: '<strong>cgroups (2006)</strong> — Rohit Seth at Google <a href="https://lkml.org/lkml/2006/9/15/4">posts the original "containers" patch</a> to LKML (Sep 2006). Paul Menage (also Google) evolves it into what ships as "cgroups" (renamed to avoid confusion with OS-level containers). Finally: kernel-native resource limiting for CPU, memory, I/O. Hierarchical groups of processes with pluggable controllers. The foundation that LXC and Docker would later build on.' },
   { year: '2008', name: 'LXC', color: 'var(--orange)', info: '<strong>LXC (2008)</strong> — Daniel Lezcano at IBM creates the Linux Resource Containers project, the first container implementation designed to push everything into the mainline kernel. Built on namespaces + cgroups. Unlike OpenVZ and Linux-VServer, no permanent out-of-tree patches. Docker used LXC as its execution backend until replacing it with libcontainer in 2014.' },
   { year: '2013', name: 'Docker', color: 'var(--accent)', info: '<strong>Docker (2013)</strong> — Solomon Hykes gives a <a href="https://www.youtube.com/watch?v=9xciauwbsuo">5-minute lightning talk</a> at PyCon Santa Clara: "this is the first time we show anything outside the dotCloud office." dotCloud\'s internal container engine, built on LXC and AUFS, refactored and open-sourced. The killer innovation wasn\'t isolation — it was the <em>developer experience</em>: Dockerfile, image layers, and a CLI that made containers accessible. dotCloud renamed to Docker Inc. in 2013, sold the PaaS in 2014.' },
