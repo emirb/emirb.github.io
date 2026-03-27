@@ -519,9 +519,12 @@
   .m-hypervisor { border-color: var(--accent); background: #0969da10; width: 88%; margin-top: -0.3rem; }
   .m-vm { border-color: var(--green); background: #1a7f3710; width: 76%; margin-top: -0.3rem; }
   .m-runtime { border-color: var(--orange); background: #bf870010; width: 64%; margin-top: -0.3rem; }
-  .m-code { border-color: var(--red); background: #cf222e10; width: 52%; margin-top: -0.3rem; }
+  .m-code { border-color: var(--red); background: #cf222e10; width: 52%; margin-top: -0.3rem; animation: mPulse 2s ease-in-out 1s 2; }
+  @keyframes mPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(207, 34, 46, 0); }
+    50% { box-shadow: 0 0 12px 2px rgba(207, 34, 46, 0.25); }
+  }
   .m-label {
-    font-family: var(--font-mono);
     font-size: 0.75rem;
     font-weight: 600;
   }
@@ -537,7 +540,6 @@
     border-radius: 6px;
     font-size: 0.8rem;
     text-align: center;
-    font-family: var(--font-mono);
     transition: all 0.3s;
   }
 
@@ -775,6 +777,76 @@
     background: var(--accent);
     border-radius: 3px 0 0 3px;
   }
+
+  /* Boot Terminal Demo */
+  .boot-term {
+    background: #0d1117;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #30363d;
+  }
+  .boot-term-header {
+    background: #161b22;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-bottom: 1px solid #30363d;
+  }
+  .boot-term-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .boot-term-title {
+    font-size: 0.7rem;
+    color: #8b949e;
+    margin-left: 0.5rem;
+    font-family: var(--font-mono);
+  }
+  #bt-body {
+    padding: 0.8rem 1rem;
+    max-height: 340px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: #c9d1d9;
+    background: #0d1117;
+    scrollbar-width: thin;
+    scrollbar-color: #30363d transparent;
+  }
+  #bt-body::-webkit-scrollbar { width: 6px; }
+  #bt-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  .bt-line { white-space: pre-wrap; word-break: break-all; }
+  .bt-prompt { color: #58a6ff; }
+  .bt-dmesg { color: #8b949e; }
+  .bt-motd { color: #f0883e; font-weight: 600; }
+  .bt-ok { color: #3fb950; font-weight: 700; }
+  .bt-cursor {
+    display: inline-block;
+    width: 7px;
+    height: 13px;
+    background: #58a6ff;
+    vertical-align: text-bottom;
+    animation: btBlink 1s step-end infinite;
+  }
+  @keyframes btBlink { 50% { opacity: 0; } }
+  .boot-timer-display {
+    font-family: var(--font-mono);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    transition: color 0.3s;
+  }
+  .boot-timer-display.done { color: var(--green); }
+  .boot-timer-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
 </style>
 </head>
 <body>
@@ -832,7 +904,7 @@
 
 <p>For a long time, this was an accepted trade-off. If you trusted the code inside the container (your own code, your own team), the convenience was worth it.</p>
 
-<p>Then two things happened.</p>
+<p>Then two things happened, but with several years apart.</p>
 
 <p>First, AWS built <a href="https://firecracker-microvm.github.io/">Firecracker</a> (2018), a tiny virtual machine monitor written in Rust, and used it to run every Lambda function in its own hardware-isolated VM. Boot time: <span class="num">125ms</span>. Memory overhead: <span class="num">&lt;5 MiB</span>. "Just spin up a VM" stopped being a punchline.</p>
 
@@ -842,7 +914,7 @@
 
 <h2>What Actually Happens When a Container "Escapes"</h2>
 
-<p>Click (or hover) on any layer below to understand what separates your code from the host in each model. The difference is not subtle.</p>
+<p>Hover over any layer below to understand what separates your code from the host in each model. The difference is not subtle.</p>
 
 <!-- INTERACTIVE: Isolation Comparison -->
 <div class="interactive">
@@ -896,7 +968,7 @@
     </div>
   </div>
   <div class="layer-info" id="layer-info">
-    Click any layer to see what it actually does. Spoiler: the container side has a lot of "but if someone finds a kernel bug..." caveats.
+    Hover over any layer to see what it actually does. Spoiler: the container side has a lot of "but if someone finds a kernel bug..." caveats.
   </div>
 </div>
 
@@ -940,7 +1012,7 @@
     </div>
   </div>
   <div class="htl-detail" id="htl-detail">
-    Drag or click any dot to explore. Each generation tried to isolate more with less overhead and each one eventually hit the limits of sharing a kernel.
+    Hover over any dot to explore. Each generation tried to isolate more with less overhead and each one eventually hit the limits of sharing a kernel.
   </div>
 </div>
 
@@ -992,7 +1064,7 @@
 
 <p>Firecracker is ~83K lines of Rust, Cloud Hypervisor ~106K. Both use KVM. Both share code through rust-vmm. In synthetic benchmarks, the virtualization overhead is in the low single-digit percentages (effectively negligible).</p>
 
-<p>The difference is <strong>philosophy</strong>.</p>
+<p>The difference is in their <strong>philosophy</strong>, and it mostly comes from the fact how Firecracker was born at AWS for one specific job.</p>
 
 <p>Firecracker is a scalpel. It deliberately <em>removes</em> features to minimize attack surface. No GPU passthrough. No CPU hotplugging. No nested virtualization. This is perfect for AWS Lambda's threat model: short-lived functions that never need <code>/dev/kvm</code> or a GPU.</p>
 
@@ -1000,14 +1072,38 @@
 
 <div class="callout">
   <div class="callout-title">The deciding question</div>
-  <p>Do your workloads need to run Docker-in-Docker, Android emulators, or anything that requires <code>/dev/kvm</code> inside the VM? If yes: Cloud Hypervisor. If no: Firecracker. Don't overthink it.</p>
+  <p>Do your workloads need to run Docker-in-Docker, Android emulators, or anything that requires <code>/dev/kvm</code> inside the VM, or Windows, or some more complex setup? If yes: Cloud Hypervisor. If no: Firecracker.</p>
 </div>
 
 <p><a href="https://fly.io">Fly.io</a> (a public cloud that runs customer containers as Firecracker VMs on their own hardware worldwide which I admire) <a href="https://fly.io/blog/wrong-about-gpu/">learned this the hard way</a> with GPUs. They run Firecracker for standard workloads and they do it very well with superb developer experience. But they had to bring in Cloud Hypervisor for GPU Machines that need PCIe passthrough, burning months trying to get Nvidia's host drivers working, at one point hex-editing closed-source drivers to trick them into thinking Cloud Hypervisor was QEMU. They've since scaled back their GPU ambitions. If your workloads need nested KVM, Windows, or other stuff like Android device emulators, then Cloud Hypervisor is the pragmatic single-VMM choice. If you only need ephemeral compute, Firecracker's simpler model may be worth it.</p>
 
 <h2>Performance: Boot Time and Runtime Overhead</h2>
 
-<p>The most common objection to microVMs is latency. "A whole VM per request? That'll add minutes." It doesn't. The <a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a> measured <span class="num">&lt;125ms</span> to boot a Linux kernel and start accepting API calls. With snapshot-restore, you can get to <span class="num">~28ms</span>. AWS Lambda uses this for SnapStart: they freeze the VM after initialization, then restore the snapshot on cold start. Colin Percival has gotten <a href="https://www.usenix.org/publications/loginonline/freebsd-firecracker">FreeBSD booting on Firecracker in under 20ms</a> with kernel patches (the kernel boots faster than a TCP handshake!). I myself stripped a mininal Linux 6.18 kernel to ~30 MB with minimal drivers required to run Docker-in-Cloud Hypervisor correctly, and on modern hardware it boots in 200ms. <br>For comparison: Kubernetes pod scheduling typically takes <span class="num-bad">3-15 seconds</span>. A traditional VM boot is <span class="num-bad">30-60 seconds</span>. A microVM boot is not the bottleneck.</p>
+<p>The most common objection to microVMs is latency. "A whole VM per request? That'll add minutes." It turns out it doesn't at all. That's why I added this fancy dry-run vanilla HTML/CSS/JS demo below (from a real Cloud Hypervisor microVM). The <a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a> measured <span class="num">&lt;125ms</span> to boot a Linux kernel and start accepting API calls. With snapshot-restore, you can get to <span class="num">~28ms</span>. AWS Lambda uses this for SnapStart: they freeze the VM after initialization, then restore the snapshot on cold start. Colin Percival has gotten <a href="https://www.usenix.org/publications/loginonline/freebsd-firecracker">FreeBSD booting on Firecracker in under 20ms</a> with kernel patches (the kernel boots faster than a TCP handshake!). I myself stripped a minimal Linux 6.18 kernel to ~30 MB with minimal drivers required to run Docker-in-Cloud Hypervisor correctly, and on modern hardware it boots in 200ms. <br>For comparison: Kubernetes pod scheduling typically takes <span class="num-bad">3-15 seconds</span>. A traditional VM boot is <span class="num-bad">30-60 seconds</span>. A microVM boot is not the bottleneck.</p>
+
+<!-- INTERACTIVE: Boot Terminal Demo -->
+<div class="interactive" id="boot-demo">
+  <div class="interactive-title">See It Boot: 4 vCPU &middot; 8 GiB MicroVM</div>
+  <div class="boot-term">
+    <div class="boot-term-header">
+      <span class="boot-term-dot" style="background:#ff5f56"></span>
+      <span class="boot-term-dot" style="background:#ffbd2e"></span>
+      <span class="boot-term-dot" style="background:#27c93f"></span>
+      <span class="boot-term-title">microvm &mdash; bash</span>
+    </div>
+    <div id="bt-body">
+      <div class="bt-line bt-prompt">$ <span class="bt-cursor"></span></div>
+    </div>
+  </div>
+  <div style="display:flex; align-items:center; gap:1.2rem; margin-top:1rem;">
+    <button class="boot-btn" id="bt-btn" onclick="bootMicroVM()" style="margin-top:0">Boot microVM</button>
+    <div>
+      <div class="boot-timer-display" id="bt-timer">&mdash;</div>
+      <div class="boot-timer-label">boot time</div>
+    </div>
+  </div>
+  <p style="font-size:0.72rem; color:var(--text-dim); margin-top:0.6rem; margin-bottom:0;">Replay of a real Cloud Hypervisor boot on AMD EPYC. Slowed ~8&times; for readability. No VM is created when you press the button.</p>
+</div>
 
 <div class="callout">
   <div class="callout-title">VMMs, not VMs</div>
@@ -1016,7 +1112,7 @@
 
 <p>Runtime overhead is equally minimal. Guest code runs directly on the CPU via KVM with single-digit percentage overhead. Oracle's <a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Firecracker on OCI benchmarks</a> showed ~3% CPU overhead even with nested virtualization. In practice, dedicated-core VMs often <em>outperform</em> containers on shared hosts: when a container gets <code>--cpus=4</code> on a 192-thread host, CFS bandwidth throttling freezes the entire cgroup once daemon threads and GC exceed the quota. A VM with dedicated cores has no quota and the CPU time is a physical property of the hardware.</p>
 
-<p>The honest trade-off is operational complexity, not performance. Managing guest kernels, rootfs images, and a VMM is real work. MicroVMs earn their place when you're running untrusted code, need multi-tenant isolation, or operate at a scale where the security cost of a single container escape exceeds the engineering cost of running a VMM. Know your threat model.</p>
+<p>The honest trade-off is operational complexity, not performance. Managing guest kernels, rootfs images, and a VMM is real work. I enjoy it because our goal was to build the fastest, safest internal CI platform possible. In that segment and in several other, MicroVMs earn their place: when you're running untrusted code, when you need multi-tenant isolation, or operate at a scale where the security cost of a single container escape exceeds the engineering cost of running a VMM.</p>
 
 <div class="callout" style="border-left:3px solid var(--green);">
   <div class="callout-title" style="color:var(--green)">Bottom line</div>
@@ -1025,34 +1121,34 @@
 
 <h2>The Matryoshka Model</h2>
 
-<p>I couldn't think of a better metaphor than the <a href="https://en.wikipedia.org/wiki/Matryoshka_doll">Russian dolls</a> (or the <a href="https://en.wikipedia.org/wiki/Onion_model">layers of onion</a>)</a> for this part. The most powerful pattern emerging in 2026 is <em>nesting containers inside VMs</em>: a host runs a VMM, the VMM runs a Linux kernel, the kernel runs a container runtime, the runtime runs user code. I'm personally very bullish on this model. Each layer trusts the layer below it and <em>nothing else</em>. It gets mentally complex quite quickly, but it all comes in place after I ran full end to end <code>docker run hello-world</code> equivalent running in a microVM that just booted 200ms ago ¯\_(ツ)_/¯ </p>
+<p>I couldn't think of a better metaphor than the <a href="https://en.wikipedia.org/wiki/Matryoshka_doll">Russian dolls</a> (or the <a href="https://en.wikipedia.org/wiki/Onion_model">layers of onion</a>) for this part. The most powerful pattern emerging in 2026 is <em>nesting containers inside VMs</em>: a host runs a VMM, the VMM runs a Linux kernel, the kernel runs a container runtime, the runtime runs user code. I'm personally very bullish on this model. Each layer trusts the layer below it and <em>nothing else</em>. It gets mentally complex quite quickly, but it all comes in place after I ran full end to end <code>docker run hello-world</code> equivalent running in a microVM that just booted 200ms ago ¯\_(ツ)_/¯ </p>
 
 <div class="interactive">
-  <div class="interactive-title">Defense in depth : click a layer</div>
+  <div class="interactive-title">Defense in Depth</div>
   <div class="matryoshka" id="matryoshka">
-    <div class="m-layer m-host" onclick="matryoshkaClick(0)" id="m-0">
+    <div class="m-layer m-host" onmouseenter="matryoshkaClick(0)" id="m-0">
       <div class="m-label" style="color:var(--text-muted)">Host OS &amp; KVM</div>
       <div class="m-sublabel">Bare metal &bull; Minimal packages &bull; Hardened</div>
     </div>
-    <div class="m-layer m-hypervisor" onclick="matryoshkaClick(1)" id="m-1">
+    <div class="m-layer m-hypervisor" onmouseenter="matryoshkaClick(1)" id="m-1">
       <div class="m-label" style="color:var(--accent)">VMM (userspace, Rust)</div>
       <div class="m-sublabel">83-106K lines of Rust &bull; Seccomp-jailed &bull; Unprivileged</div>
     </div>
-    <div class="m-layer m-vm" onclick="matryoshkaClick(2)" id="m-2">
+    <div class="m-layer m-vm" onmouseenter="matryoshkaClick(2)" id="m-2">
       <div class="m-label" style="color:var(--green)">Guest VM</div>
       <div class="m-sublabel">Dedicated kernel &bull; Ephemeral &bull; Root is fine here</div>
     </div>
-    <div class="m-layer m-runtime" onclick="matryoshkaClick(3)" id="m-3">
+    <div class="m-layer m-runtime" onmouseenter="matryoshkaClick(3)" id="m-3">
       <div class="m-label" style="color:var(--orange)">Podman / Container Runtime</div>
       <div class="m-sublabel">Daemonless &bull; OCI images &bull; Familiar interface</div>
     </div>
-    <div class="m-layer m-code" onclick="matryoshkaClick(4)" id="m-4">
+    <div class="m-layer m-code" onmouseenter="matryoshkaClick(4)" id="m-4">
       <div class="m-label" style="color:var(--red)">Untrusted Code</div>
       <div class="m-sublabel">AI agent output &bull; CI script &bull; User submission</div>
     </div>
   </div>
   <div class="escape-indicator" id="m-info" style="background:var(--bg-elevated); color:var(--text-muted)">
-    Click a layer to see what happens if it's compromised. The key insight: even a full container escape (Layer 4 &rarr; Layer 3) only lands you in an ephemeral VM that's destroyed in seconds.
+    Each layer trusts the layer below it and nothing else. An attacker has to break through every boundary to reach the host. Hover a layer to see what happens if it's compromised.
   </div>
 </div>
 
@@ -1155,7 +1251,7 @@
 
 <p>The strongest case for microVMs over gVisor is <strong>compatibility</strong>. gVisor re-implements a subset of the Linux kernel. If your workload hits an unimplemented syscall or kernel feature, it breaks; and Google Cloud Run <a href="https://cloud.google.com/blog/products/serverless/cloud-run-second-gen">moved to microVMs for their second-gen execution environment</a> partly because customers kept asking for kernel features gVisor didn't support. MicroVMs run a real kernel; everything just works.</p>
 
-<p>The honest take: gVisor and microVMs are complementary tools for different points on the isolation-vs-compatibility spectrum. gVisor wins on startup speed (~50ms), memory efficiency, and GPU workloads. MicroVMs win on compatibility, nested virtualization, and the simplicity of "it's just Linux." Neither has won. Both are thriving.</p>
+<p>The honest take: gVisor and microVMs are complementary tools for different points on the isolation-vs-compatibility spectrum. gVisor wins on startup speed (~50ms), memory efficiency, and GPU workloads. MicroVMs win on compatibility, nested virtualization, and the simplicity of "it's just Linux." Neither has won and actually it seems that both are thriving with different customer bases.</p>
 
 <div class="callout">
   <div class="callout-title">The "hardened containers are fine" objection</div>
@@ -1184,7 +1280,7 @@
 
 <p>Firecracker was built for AWS Lambda in 2018. Cloud Hypervisor was built for general cloud workloads in 2019. rust-vmm has been maturing since 2018. Kata Containers has been in production since 2017. Fly.io has been running Firecracker since 2020. The monorepo consolidation, RISC-V support, IOMMU, formal verification with Kani proofs, all of this was happening quietly, year after year, while most of the industry was focused on Kubernetes and containers.</p>
 
-<p>The technology was ready. What was missing was <em>demand</em>.</p>
+<p>The technology was ready, but what was missing was <em>demand</em>. (chicken and the egg problem I guess)</p>
 
 <p>Then in 2025, agentic coding exploded. Claude Code, Codex, Copilot, Gemini CLI, you name it: millions of sessions per day where an AI writes code and needs to run it <em>somewhere</em>. Every platform in the world suddenly needed an answer to "where does the agent's code execute?" and needed it <em>now</em>.</p>
 
@@ -1203,11 +1299,11 @@
 <h2>Summary</h2>
 <p>The endgame, in my opinion, isn't really that "microVMs will replace containers." It's that the <b>isolation layer becomes invisible</b>.</p>
 
-<p>You'll still write Dockerfiles. You'll still <code>kubectl apply</code>. You'll still think in containers. But under the hood, each pod boots its own kernel in <span class="num">125ms</span>. Each AI agent session gets its own hardware-isolated VM. Each CI job runs on dedicated cores behind an EPT boundary. And you never notice, because the VMM is <span class="num">&lt;5 MiB</span> of Rust that boots before your HTTP request times out.</p>
+<p>You'll still write Dockerfiles. You'll still <code>kubectl apply</code>. You'll still think in containers, and that's nice (no new cognitive load). But under the hood, each pod boots its own kernel in <span class="num">~200ms</span>. Each AI agent session, each CI job, and so on, gets its own hardware-isolated VM. And you never notice, because the VMM is <span class="num">&lt;a few MiB</span> of Rust that boots super fast.</p>
 
-<p>This is already happening. Kata Containers puts a VM behind every Kubernetes pod. Docker Sandboxes wrap each coding agent in a microVM. AWS Lambda has been doing it since 2018 for every function invocation. The pattern is container-inside-VM: the container provides the packaging and developer experience, the VM provides the isolation. The developer sees a container. The security team sees a VM. Both are right.</p>
+<p>This is already happening. Kata Containers puts a VM behind every Kubernetes pod. Docker Sandboxes wrap each coding agent in a microVM. AWS Lambda has been doing it since 2018 for every function invocation. The nicest pattern is container-inside-VM: the container provides the packaging and developer experience, the VM provides the isolation. The developer sees a container, everything works like it does locally with Docker/Podman. The security teams see a VM. Both are happy despite the underlying complexity.</p>
 
-<p>The infrastructure to make this seamless is maintained by engineers at AWS, Intel, Google, Microsoft, Red Hat, and Alibaba, all contributing to the same monorepo of Rust crates. It runs on x86, ARM, and soon RISC-V. Eight years of quiet work, and now the demand has arrived.</p>
+<p>The infrastructure to make this seamless is maintained by engineers at AWS, Intel, Google, Microsoft, Red Hat, and Alibaba, all contributing to the same monorepo of Rust crates. Thank you! Eight years of quiet work, and now the demand has arrived.</p>
 
 <p>Your container is not a sandbox because it was never designed to be one. But it doesn't need to be! (as long as it's running inside something that is)</p>
 <p>  Thanks for reading this far. It was nice letting all of that out. 
@@ -1264,11 +1360,11 @@ function showLayerInfo(el) {
 // Matryoshka
 // ============================================
 const matryoshkaInfo = [
-  { text: '<strong style="color:var(--text-muted)">Host OS compromised:</strong> Game over. Attacker has bare metal access. This is why the host runs minimal packages, no unnecessary services, and is protected by Citadel/SSH hardening. KVM module is the only security-critical component (~25K lines).', color: 'var(--text-muted)' },
+  { text: '<strong style="color:var(--text-muted)">Host OS compromised:</strong> Game over. Attacker has bare metal access.', color: 'var(--text-muted)' },
   { text: '<strong style="color:var(--accent)">VMM compromised:</strong> Bad, but contained. The VMM runs as an unprivileged process jailed by seccomp-bpf (~25 allowed syscalls). Exploiting it gives limited host access. Firecracker is ~83K lines of Rust, Cloud Hypervisor ~106K. Memory safety bugs eliminated at compile time.', color: 'var(--accent)' },
-  { text: '<strong style="color:var(--green)">Guest VM compromised:</strong> Root inside the VM? That\'s by design. The VM IS the security boundary. The attacker sees a minimal Alpine Linux with no secrets, no route to other VMs, and a filesystem that\'s destroyed when the workload ends. Hardware virtualization (EPT/NPT) prevents access to host memory.', color: 'var(--green)' },
-  { text: '<strong style="color:var(--orange)">Container runtime compromised:</strong> The attacker has escaped the container... into the ephemeral VM. No persistence. No network path to the host. No access to other workloads. The VM is destroyed in seconds. This is the whole point of the matryoshka model.', color: 'var(--orange)' },
-  { text: '<strong style="color:var(--red)">Untrusted code runs here.</strong> AI-generated code, CI scripts, user submissions. Full root inside the container is fine because the blast radius is limited to the ephemeral VM. Install packages, run servers, modify files, who cares. It all dies when the workload ends.', color: 'var(--red)' },
+  { text: '<strong style="color:var(--green)">Guest VM compromised:</strong> Root inside the VM? That\'s by design. The VM IS the security boundary. The attacker sees a minimal Alpine Linux with no secrets, no route to other VMs, and a filesystem that\'s destroyed when the workload ends. Hardware virtualization prevents access to host memory.', color: 'var(--green)' },
+  { text: '<strong style="color:var(--orange)">Container runtime compromised:</strong> The attacker has escaped the container... into the ephemeral VM.', color: 'var(--orange)' },
+  { text: '<strong style="color:var(--red)">Untrusted code runs here.</strong> AI-generated code, CI scripts, etc. Full root inside the container is fine because the blast radius is limited to the ephemeral VM. Install packages, run servers, modify files, who cares. It all dies when the workload ends.', color: 'var(--red)' },
 ];
 
 function matryoshkaClick(idx) {
@@ -1446,6 +1542,181 @@ historyData.forEach((item, i) => {
   };
   htlTrack.appendChild(dot);
 });
+
+// ============================================
+// Boot Terminal Demo
+// ============================================
+const bootDmesg = [
+  [0.000000, 'Linux version 6.18.1-lts (builder@ci) (gcc 14.2) #1 SMP PREEMPT'],
+  [0.000000, 'Command line: console=ttyS0 reboot=k panic=1 ... ip=172.30.0.11'],
+  [0.027572, 'smp: Brought up 1 node, 4 CPUs'],
+  [0.027572, 'smpboot: Total of 4 processors activated (28756.64 BogoMIPS)'],
+  [0.027651, 'Memory: 8220824K/8388220K available (10086K kernel code)'],
+  [0.028630, 'devtmpfs: initialized'],
+  [0.045508, 'clocksource: Switched to clocksource kvm-clock'],
+  [0.053770, 'kvm_amd: Nested Virtualization enabled'],
+  [0.053771, 'kvm_amd: Nested Paging enabled'],
+  [0.078631, 'virtio_blk virtio1: [vda] 419430400 512-byte logical blocks (200 GiB)'],
+  [0.103556, 'IP-Config: Complete:'],
+  [0.103558, '     device=eth0, ipaddr=172.30.0.11, gw=172.30.0.10'],
+  [0.106073, 'EXT4-fs (vda): mounted filesystem r/w without journal'],
+  [0.106433, 'Run /sbin/init as init process'],
+];
+
+function bootMicroVM() {
+  const btn = document.getElementById('bt-btn');
+  const body = document.getElementById('bt-body');
+  const timerEl = document.getElementById('bt-timer');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+  btn.textContent = 'Booting\u2026';
+  timerEl.className = 'boot-timer-display';
+  timerEl.textContent = '0 ms';
+  body.innerHTML = '';
+
+  const cmd = `cloud-hypervisor \\
+  --kernel vmlinux-6.18-lts \\
+  --cpus boot=4,nested=on,topology=2:2:1:1 \\
+  --memory-zone size=8192M \\
+  --disk path=alpine-rootfs.img \\
+  --net tap=vmtap0,mac=AA:FC:00:00:00:0B \\
+  --serial tty --console off`;
+  const SCALE = 8;
+  const TARGET = 106;
+  const TYPE_SPEED = 5;
+
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function fmtTs(sec) {
+    let s = sec.toFixed(6);
+    while (s.length < 12) s = ' ' + s;
+    return '[' + s + ']';
+  }
+
+  function addLine(text, cls) {
+    const el = document.createElement('div');
+    el.className = 'bt-line ' + (cls || '');
+    el.textContent = text;
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  // Phase 1: Type command
+  const promptEl = document.createElement('div');
+  promptEl.className = 'bt-line bt-prompt';
+  promptEl.innerHTML = '<span style="color:#3fb950">$</span> <span class="bt-cursor"></span>';
+  body.appendChild(promptEl);
+
+  let ci = 0;
+  function typeNext() {
+    if (ci < cmd.length) {
+      promptEl.innerHTML = '<span style="color:#3fb950">$</span> ' + esc(cmd.substring(0, ++ci)) + '<span class="bt-cursor"></span>';
+      body.scrollTop = body.scrollHeight;
+      setTimeout(typeNext, TYPE_SPEED);
+    } else {
+      promptEl.innerHTML = '<span style="color:#3fb950">$</span> ' + esc(cmd);
+      setTimeout(phase2, 200);
+    }
+  }
+
+  // Phase 2: dmesg lines + timer
+  function phase2() {
+    addLine('', '');
+    const t0 = performance.now();
+    let raf;
+
+    function tick() {
+      const ms = Math.min(Math.floor((performance.now() - t0) / SCALE), TARGET);
+      timerEl.textContent = ms + ' ms';
+      if (ms < TARGET) raf = requestAnimationFrame(tick);
+    }
+    raf = requestAnimationFrame(tick);
+
+    bootDmesg.forEach(d => {
+      setTimeout(() => addLine(fmtTs(d[0]) + ' ' + d[1], 'bt-dmesg'), d[0] * 1000 * SCALE);
+    });
+
+    setTimeout(() => {
+      cancelAnimationFrame(raf);
+      timerEl.textContent = TARGET + ' ms';
+      timerEl.classList.add('done');
+      setTimeout(phase3, 300);
+    }, TARGET * SCALE + 80);
+  }
+
+  // Phase 3: motd
+  function phase3() {
+    addLine('', '');
+    addLine('Welcome to microvm-podman01 (kernel 6.18.1-lts)', 'bt-motd');
+    addLine('  4 vCPUs | 8G RAM | nested=on | Isolation: AMD-V/NPT', 'bt-motd');
+    addLine('', '');
+    setTimeout(phase4, 400);
+  }
+
+  // Phase 4: demo commands inside the VM
+  const VM_PS1 = '<span style="color:#3fb950">microvm-podman01</span>:<span style="color:#58a6ff">~</span>#';
+
+  function typeVmCmd(text, cb) {
+    const el = document.createElement('div');
+    el.className = 'bt-line bt-prompt';
+    el.innerHTML = VM_PS1 + ' <span class="bt-cursor"></span>';
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+    let k = 0;
+    function t() {
+      if (k < text.length) {
+        el.innerHTML = VM_PS1 + ' ' + esc(text.substring(0, ++k)) + '<span class="bt-cursor"></span>';
+        body.scrollTop = body.scrollHeight;
+        setTimeout(t, TYPE_SPEED * 3);
+      } else {
+        el.innerHTML = VM_PS1 + ' ' + esc(text);
+        setTimeout(cb, 150);
+      }
+    }
+    t();
+  }
+
+  function phase4() {
+    typeVmCmd('lscpu', () => {
+      addLine('Architecture:            x86_64', '');
+      addLine('CPU(s):                  4', '');
+      addLine('  On-line CPU(s) list:   0-3', 'bt-dmesg');
+      addLine('Vendor ID:               AuthenticAMD', '');
+      addLine('  Model name:            AMD EPYC 9474F 48-Core Processor', '');
+      addLine('    Thread(s) per core:  2', 'bt-dmesg');
+      addLine('    Core(s) per socket:  2', 'bt-dmesg');
+      addLine('    Socket(s):           1', 'bt-dmesg');
+      addLine('    BogoMIPS:            7189.16', 'bt-dmesg');
+      addLine('Virtualization features:', '');
+      addLine('  Virtualization:        AMD-V', 'bt-ok');
+      addLine('  Hypervisor vendor:     KVM', 'bt-ok');
+      addLine('  Virtualization type:   full', 'bt-ok');
+      setTimeout(() => {
+        typeVmCmd('docker run alpine:3.22 echo "hello from a container inside a VM"', () => {
+          addLine('Resolving "alpine" using unqualified-search registries (/etc/containers/registries.conf)', 'bt-dmesg');
+          addLine('Trying to pull docker.io/library/alpine:3.22...', 'bt-dmesg');
+          addLine('Getting image source signatures', 'bt-dmesg');
+          addLine('Copying blob d49a2dee86fb done   |', 'bt-dmesg');
+          addLine('Copying config f65e6e80f6 done   |', 'bt-dmesg');
+          addLine('Writing manifest to image destination', 'bt-dmesg');
+          addLine('hello from a container inside a VM', 'bt-ok');
+          addLine('', '');
+          const fp = document.createElement('div');
+          fp.className = 'bt-line bt-prompt';
+          fp.innerHTML = VM_PS1 + ' <span class="bt-cursor"></span>';
+          body.appendChild(fp);
+          body.scrollTop = body.scrollHeight;
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.textContent = 'Boot again';
+        });
+      }, 500);
+    });
+  }
+
+  typeNext();
+}
 
 </script>
 
