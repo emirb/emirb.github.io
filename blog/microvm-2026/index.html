@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Your Container Is Not a Sandbox — The State of MicroVM Isolation in 2026</title>
-<meta name="description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, QEMU microvm, AI agent sandboxes, and why every coding agent boots its own Linux kernel. Interactive guide with verified numbers.">
+<meta name="description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, QEMU microvm, AI agent sandboxes, and why your coding agent should boot its own Linux kernel. Interactive guide with verified numbers.">
 <meta property="og:title" content="Your Container Is Not a Sandbox">
-<meta property="og:description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, AI agent sandboxes, and why every coding agent boots its own Linux kernel.">
+<meta property="og:description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, AI agent sandboxes, and why your coding agent should boot its own Linux kernel.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://emirb.github.io/blog/microvm-2026">
 <meta property="og:image" content="https://emirb.github.io/blog/microvm-2026/og-image.png">
@@ -15,29 +15,29 @@
 <meta property="article:published_time" content="2026-03-27">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Your Container Is Not a Sandbox">
-<meta name="twitter:description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, AI agent sandboxes, and why every coding agent boots its own Linux kernel.">
+<meta name="twitter:description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, AI agent sandboxes, and why your coding agent should boot its own Linux kernel.">
 <meta name="twitter:image" content="https://emirb.github.io/blog/microvm-2026/og-image.png">
 <style>
   :root {
-    --bg: #0d1117;
-    --bg-surface: #161b22;
-    --bg-elevated: #1c2333;
-    --text: #e6edf3;
-    --text-muted: #8b949e;
-    --text-dim: #484f58;
-    --accent: #58a6ff;
-    --accent-bright: #79c0ff;
-    --green: #3fb950;
-    --red: #f85149;
-    --orange: #d29922;
-    --purple: #bc8cff;
-    --pink: #f778ba;
-    --border: #30363d;
-    --code-bg: #0d1117;
-    --layer-host: #1a3a5c;
-    --layer-vm: #1a4a3c;
-    --layer-container: #4a1a3c;
-    --layer-process: #3c3a1a;
+    --bg: #ffffff;
+    --bg-surface: #f6f8fa;
+    --bg-elevated: #eef1f5;
+    --text: #1f2328;
+    --text-muted: #656d76;
+    --text-dim: #8b949e;
+    --accent: #0969da;
+    --accent-bright: #0550ae;
+    --green: #1a7f37;
+    --red: #cf222e;
+    --orange: #bf8700;
+    --purple: #8250df;
+    --pink: #bf3989;
+    --border: #d0d7de;
+    --code-bg: #f6f8fa;
+    --layer-host: #dce8f5;
+    --layer-vm: #d4edda;
+    --layer-container: #f5d0e0;
+    --layer-process: #f0edd0;
     --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, monospace;
     --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
     --max-width: 800px;
@@ -59,7 +59,7 @@
     content: '';
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    opacity: 0.022;
+    opacity: 0.012;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     background-size: 256px 256px;
     pointer-events: none;
@@ -128,7 +128,7 @@
   p { margin-bottom: 1.2rem; }
   a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
   a:hover { text-decoration: none; border-bottom-color: var(--accent); }
-  strong { color: #fff; font-weight: 600; }
+  strong { color: #1f2328; font-weight: 600; }
   em { color: var(--text-muted); }
 
   code {
@@ -184,7 +184,7 @@
     padding: 1.8rem;
     margin: 2.5rem 0;
     position: relative;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   }
   .interactive::before {
     content: 'interactive';
@@ -192,14 +192,14 @@
     top: -0.6rem;
     left: 1rem;
     background: var(--accent);
-    color: var(--bg);
+    color: #ffffff;
     font-size: 0.6rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     padding: 0.2rem 0.7rem;
     border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(88, 166, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(9, 105, 218, 0.15);
   }
   .interactive-title {
     font-size: 0.82rem;
@@ -260,10 +260,10 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
-  .badge-hw { background: var(--green); color: var(--bg); }
-  .badge-kernel { background: var(--orange); color: var(--bg); }
+  .badge-hw { background: var(--green); color: #ffffff; }
+  .badge-kernel { background: var(--orange); color: #ffffff; }
   .badge-ns { background: var(--red); color: #fff; }
-  .badge-process { background: var(--purple); color: var(--bg); }
+  .badge-process { background: var(--purple); color: #ffffff; }
 
   .layer-info {
     margin-top: 1rem;
@@ -342,7 +342,7 @@
   }
   .boot-btn {
     background: var(--accent);
-    color: var(--bg);
+    color: #ffffff;
     border: none;
     padding: 0.5rem 1.2rem;
     border-radius: 6px;
@@ -484,14 +484,14 @@
     font-weight: 600;
     text-transform: uppercase;
   }
-  .iso-firecracker { background: #f8514920; color: var(--orange); border: 1px solid var(--orange); }
-  .iso-gvisor { background: #3fb95020; color: var(--green); border: 1px solid var(--green); }
-  .iso-ch { background: #58a6ff20; color: var(--accent); border: 1px solid var(--accent); }
-  .iso-v8 { background: #bc8cff20; color: var(--purple); border: 1px solid var(--purple); }
-  .iso-docker { background: #f778ba20; color: var(--pink); border: 1px solid var(--pink); }
+  .iso-firecracker { background: #bf870015; color: var(--orange); border: 1px solid var(--orange); }
+  .iso-gvisor { background: #1a7f3715; color: var(--green); border: 1px solid var(--green); }
+  .iso-ch { background: #0969da15; color: var(--accent); border: 1px solid var(--accent); }
+  .iso-v8 { background: #8250df15; color: var(--purple); border: 1px solid var(--purple); }
+  .iso-docker { background: #bf398915; color: var(--pink); border: 1px solid var(--pink); }
   .sandbox-desc {
     font-size: 0.78rem;
-    color: #b1bac4;
+    color: #57606a;
     margin-top: 0.3rem;
     line-height: 1.5;
   }
@@ -514,11 +514,11 @@
     position: relative;
   }
   .m-layer:hover { transform: scale(1.02); }
-  .m-host { border-color: #30363d; background: #161b2280; width: 100%; }
-  .m-hypervisor { border-color: var(--accent); background: #58a6ff10; width: 88%; margin-top: -0.3rem; }
-  .m-vm { border-color: var(--green); background: #3fb95010; width: 76%; margin-top: -0.3rem; }
-  .m-runtime { border-color: var(--orange); background: #d2992210; width: 64%; margin-top: -0.3rem; }
-  .m-code { border-color: var(--red); background: #f8514910; width: 52%; margin-top: -0.3rem; }
+  .m-host { border-color: var(--border); background: var(--bg-surface); width: 100%; }
+  .m-hypervisor { border-color: var(--accent); background: #0969da10; width: 88%; margin-top: -0.3rem; }
+  .m-vm { border-color: var(--green); background: #1a7f3710; width: 76%; margin-top: -0.3rem; }
+  .m-runtime { border-color: var(--orange); background: #bf870010; width: 64%; margin-top: -0.3rem; }
+  .m-code { border-color: var(--red); background: #cf222e10; width: 52%; margin-top: -0.3rem; }
   .m-label {
     font-family: var(--font-mono);
     font-size: 0.75rem;
@@ -676,7 +676,7 @@
   }
   .htl-dot:hover { transform: scale(1.05); }
   .htl-dot.active .htl-circle {
-    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.25);
+    box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.2);
     transform: scale(1.4);
   }
   .htl-circle {
@@ -753,7 +753,7 @@
   /* Smooth link underlines in body text */
   p a, li a, td a, .sandbox-desc a, .vmm-detail a {
     border-bottom: 1px solid var(--accent);
-    border-bottom-color: rgba(88, 166, 255, 0.3);
+    border-bottom-color: rgba(9, 105, 218, 0.3);
     transition: border-color 0.2s;
   }
   p a:hover, li a:hover, td a:hover, .sandbox-desc a:hover, .vmm-detail a:hover {
@@ -793,7 +793,7 @@
 
 <blockquote>Containers are not a security boundary. They are a mechanism to control resource usage.</blockquote>
 
-<p>I've been running Linux since I was twelve, yet I realized that only until recently I didn't fully internalize what that sentence truly means .</p>
+<p>I've been running Linux since I was twelve, yet not until recently did I fully internalize what that sentence truly means.</p>
 
 <p>Following my last few months spent going deep on microVMs, building infrastructure on them and learning every VMM, every isolation approach, every trade-off in this space...I wanted to write a post as the guide I wish I'd had when I started. This covers the VMMs, the shared Rust ecosystem powering them, the AI sandbox explosion, and where it's all heading.</p>
 <!-- TL;DR -->
@@ -1023,7 +1023,7 @@
 
 <h2>The Matryoshka Model</h2>
 
-<p>The most powerful pattern emerging in 2026 is <em>supernesting</em>: a host runs a VMM, the VMM runs a Linux kernel, the kernel runs a container runtime, the runtime runs user code. Each layer trusts the layer below it and <em>nothing else</em>.</p>
+<p>The most powerful pattern emerging in 2026 is <em>nesting containers inside VMs</em>: a host runs a VMM, the VMM runs a Linux kernel, the kernel runs a container runtime, the runtime runs user code. I'm personally very bullish on this model. Each layer trusts the layer below it and <em>nothing else</em>.</p>
 
 <div class="interactive">
   <div class="interactive-title">Defense in depth : click a layer</div>
@@ -1117,7 +1117,7 @@
   </div>
 </div>
 
-<p>The pattern is unmistakable. In the span of 18 months, <strong>every major platform</strong> converged on the same answer: untrusted code runs in a VM, not a container. The only debate is which VMM and how persistent the state should be.</p>
+<p>The pattern is unmistakable. In the span of 18 months, <strong>nearly every major platform</strong> converged on the same answer: untrusted code runs in a VM, not a container. The only debate is which VMM and how persistent the state should be.</p>
 
 <p>Cloudflare's V8 isolates are the interesting outlier: sub-millisecond startup but limited to JavaScript and WebAssembly. For full Linux environments where agents install packages and run Docker, microVMs are the only game in town.</p>
 
@@ -1208,8 +1208,6 @@
 
 <p>Your container is not a sandbox. It was never designed to be one. But it doesn't need to be — as long as it's running inside something that is.</p>
 
-<hr>
-
 <div class="footnote">
   <p><strong>Further reading:</strong></p>
   <p><strong>VMMs and runtimes:</strong> <a href="https://firecracker-microvm.github.io/">Firecracker</a> (<a href="https://aws.amazon.com/blogs/aws/firecracker-lightweight-virtualization-for-serverless-computing/">Jeff Barr's launch post</a>) &bull; <a href="https://www.cloudhypervisor.org/">Cloud Hypervisor</a> (<a href="https://www.cloudhypervisor.org/blog/cloud-hypervisor-v51.0-released/">v51.0 release</a>) &bull; <a href="https://github.com/rust-vmm">rust-vmm</a> &bull; <a href="https://www.qemu.org/docs/master/system/i386/microvm.html">QEMU microvm</a> &bull; <a href="https://github.com/containers/libkrun">libkrun</a> &bull; <a href="https://katacontainers.io/">Kata Containers</a> &bull; <a href="https://edera.dev/">Edera</a> &bull; <a href="https://lima-vm.io/">Lima</a> &bull; <a href="https://tart.run/">Tart</a></p>
@@ -1231,7 +1229,7 @@
 // Layer Info Data
 // ============================================
 const layerInfoData = {
-  'container-host': '<strong style="color:var(--red)">Shared kernel (40M+ lines of code).</strong> Every container on the host shares this kernel. A kernel exploit (CVE-2024-1086, CVE-2022-0185, ...) gives you root on the host and access to every other container. The kernel exposes ~385 syscalls; seccomp blocks some, but the attack surface is enormous.',
+  'container-host': '<strong style="color:var(--red)">Shared kernel (40M+ lines of code).</strong> Every container on the host shares this kernel. A kernel exploit (CVE-2024-1086, CVE-2022-0185, ...) gives you root on the host and access to every other container. The kernel exposes 450+ syscalls; seccomp blocks some, but the attack surface is enormous.',
   'container-ns': '<strong>Namespaces hide resources, they don\'t protect them.</strong> PID namespace hides other processes. Mount namespace hides other filesystems. Network namespace gives you your own IP. But these are all enforced by the shared kernel. A kernel bug bypasses all of them simultaneously.',
   'container-cg': '<strong>Cgroups limit resources, not access.</strong> They prevent your container from using too much CPU, memory, or I/O. They do nothing to prevent privilege escalation, kernel exploitation, or accessing host resources through side channels.',
   'container-seccomp': '<strong>Seccomp-bpf filters syscalls.</strong> Docker\'s default profile blocks ~44 of ~450 syscalls. Better than nothing, but the remaining 400+ syscalls include plenty of attack surface. And if you need <code>--privileged</code> for Docker-in-Docker... seccomp is disabled entirely.',
@@ -1304,7 +1302,7 @@ const vmms = [
     lang: 'c',
     boot: '~0.4-1.2s',
     mem: '100s MiB',
-    loc: '2M',
+    loc: '~2M',
     nested: 'Yes',
     detail: 'The venerable general-purpose VMM. Supports every architecture, every device, and has the most mature VFIO passthrough. Default backend for Kata Containers and KubeVirt. Notably, QEMU now has a <code>microvm</code> machine type <a href="https://www.qemu.org/docs/master/system/i386/microvm.html">inspired by Firecracker</a>: no PCI, no ACPI, up to 8 virtio-mmio devices, paired with qboot for minimal firmware. With all legacy disabled, QEMU microvm approaches Firecracker boot times. Ubuntu ships a dedicated <code>qemu-system-x86-microvm</code> binary.',
     users: 'Kata Containers (default), KubeVirt, libvirt, Proxmox, OpenStack, Lima'
@@ -1412,7 +1410,7 @@ const historyData = [
   { year: '2018', name: 'FC', color: 'var(--green)', info: '<strong>Firecracker (2018)</strong> — AWS open-sources the VMM powering Lambda. ~83K lines of Rust, <5 MiB overhead, ~125ms boot. The inflection point: for the first time, per-workload VMs are practical at scale. <em>The isolation is no longer a software convention—it\'s enforced by hardware.</em>' },
   { year: '2018', name: 'gVisor', color: 'var(--green)', info: '<strong>gVisor (2018)</strong> — Google open-sources a user-space application kernel. Intercepts syscalls in a memory-safe Go process instead of passing them to the shared kernel. A middle ground: better isolation than containers, less overhead than VMs.' },
   { year: '2019', name: 'CH', color: 'var(--green)', info: '<strong>Cloud Hypervisor (2019)</strong> — Intel starts a new rust-vmm-based VMM for general-purpose cloud workloads. Adds nested virtualization, GPU passthrough, hotplugging. Now maintained by Intel, Microsoft, Cyberus, and Tencent.' },
-  { year: '2025', name: 'AI', color: 'var(--pink)', info: '<strong>AI Agent Sandboxes (2025-2026)</strong> — E2B, Fly.io Sprites, Docker Sandboxes, AWS Bedrock AgentCore, Microsandbox. Every major platform ships microVM-based isolation for AI coding agents. The use case that makes the whole industry care about workload isolation.' },
+  { year: '2025', name: 'AI', color: 'var(--pink)', info: '<strong>AI Agent Sandboxes (2025-2026)</strong> — E2B, Fly.io Sprites, Docker Sandboxes, AWS Bedrock AgentCore, Microsandbox. Nearly every major platform ships microVM-based isolation for AI coding agents. The use case that makes the whole industry care about workload isolation.' },
 ];
 
 // Build horizontal timeline
