@@ -17,6 +17,17 @@
 <meta name="twitter:title" content="Your Container Is Not a Sandbox">
 <meta name="twitter:description" content="The state of microVM isolation in 2026: Firecracker, Cloud Hypervisor, rust-vmm, AI agent sandboxes, and why your coding agent should boot its own Linux kernel.">
 <meta name="twitter:image" content="https://emirb.github.io/blog/microvm-2026/og-image.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Your Container Is Not a Sandbox: The State of MicroVM Isolation in 2026",
+  "author": { "@type": "Person", "name": "Emir Beganović" },
+  "publisher": { "@type": "Person", "name": "Emir Beganović" },
+  "datePublished": "2026-03-27",
+  "url": "https://emirb.github.io/blog/microvm-2026/"
+}
+</script>
 <style>
   :root {
     --bg: #ffffff;
@@ -221,9 +232,10 @@
   @media (max-width: 640px) {
     .isolation-grid { grid-template-columns: 1fr; }
     .hero h1 { font-size: 2.2rem; }
-    .htl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .htl-track { min-width: 700px; }
-    .htl-dot { min-width: 55px; }
+    #timeline-history .htl-scroll,
+    #timeline-history .htl-detail { display: none !important; }
+    #timeline-history::before { display: none !important; }
+    .htl-mobile { display: block !important; }
   }
   .isolation-col h4 {
     font-size: 0.95rem;
@@ -462,6 +474,7 @@
   }
   @media (max-width: 640px) {
     .sandbox-grid { grid-template-columns: 1fr; }
+    .sandbox-grid .sandbox-card { grid-column: span 1 !important; }
   }
   .sandbox-card {
     background: var(--bg-elevated);
@@ -705,6 +718,11 @@
     white-space: nowrap;
     text-align: center;
   }
+  @media (min-width: 641px) { .htl-mobile { display: none; } }
+  .htl-mobile ul { list-style: none; padding: 0; margin: 0; }
+  .htl-mobile li { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.2rem 0; font-size: 0.82rem; }
+  .htl-mobile li span:first-child { font-family: var(--font-mono); font-weight: 700; min-width: 2.5rem; text-align: right; flex-shrink: 0; }
+  .htl-mobile li span:last-child { color: var(--text-muted); }
   .htl-detail {
     margin-top: 0.8rem;
     padding: 1rem 1.2rem;
@@ -854,6 +872,7 @@
 <main class="container">
 
 <!-- HERO -->
+<article>
 <header class="hero">
   <p style="font-size:0.82rem; color:var(--accent); margin-bottom:0.6rem; letter-spacing:0.06em; text-transform:uppercase; font-weight:700;">The State of MicroVM Isolation in 2026</p>
   <h1>Your Container Is&nbsp;Not&nbsp;a&nbsp;Sandbox</h1>
@@ -1014,6 +1033,22 @@
   <div class="htl-detail" id="htl-detail">
     Hover over any dot to explore. Each generation tried to isolate more with less overhead and each one eventually hit the limits of sharing a kernel.
   </div>
+  <div class="htl-mobile">
+    <ul>
+      <li><span>1979</span> <span>chroot: filesystem isolation, trivially escapable</span></li>
+      <li><span>1999</span> <span>FreeBSD Jails: first real OS-level virtualization</span></li>
+      <li><span>2004</span> <span>Solaris Zones: resource controls, isolated networking</span></li>
+      <li><span>2005</span> <span>OpenVZ: Linux containers via patched kernel</span></li>
+      <li><span>2006</span> <span>cgroups: Google contributes resource limiting to Linux</span></li>
+      <li><span>2008</span> <span>LXC: first complete Linux containers (namespaces + cgroups)</span></li>
+      <li><span>2013</span> <span>Docker: containers go mainstream</span></li>
+      <li><span>2015</span> <span>runc/OCI: container runtime standardized</span></li>
+      <li><span>2018</span> <span>Firecracker: AWS open-sources the VMM powering Lambda</span></li>
+      <li><span>2018</span> <span>gVisor: Google's userspace application kernel</span></li>
+      <li><span>2019</span> <span>Cloud Hypervisor: Intel's rust-vmm-based VMM</span></li>
+      <li><span>2025</span> <span>AI agent sandboxes: the "Docker moment" for microVMs</span></li>
+    </ul>
+  </div>
 </div>
 
 <p>The pattern is clear: every approach that shares a kernel eventually hits the same wall. <code>chroot</code> didn't isolate processes. FreeBSD jails didn't isolate networking. Namespaces and cgroups don't isolate the kernel's <span class="num-bad">450+ syscall</span> attack surface. Each generation added more layers of software defense, and each generation produced new escape CVEs.</p>
@@ -1171,46 +1206,65 @@
 
 <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin:2rem 0;">
   <div class="interactive-title">The AI Sandbox Ecosystem (2026)</div>
+  <div style="font-size:0.75rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-top:1rem; margin-bottom:0.4rem;">Firecracker-based</div>
   <div class="sandbox-grid">
-    <div class="sandbox-card">
-      <div class="sandbox-name"><a href="https://e2b.dev/">E2B</a> <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
-      <div class="sandbox-desc">The OG. Purpose-built Firecracker sandboxes for AI agents. ~150ms boot. 88% of Fortune 100 signed up. Hundreds of millions of sandboxes initiated.</div>
-    </div>
     <div class="sandbox-card">
       <div class="sandbox-name"><a href="https://sprites.dev/">Fly.io Sprites</a> <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
       <div class="sandbox-desc">Persistent, stateful VMs. Checkpoint/restore in ~300ms. Pre-installed with Claude Code, Codex CLI. The "developer workstation as a VM" model.</div>
     </div>
     <div class="sandbox-card">
-      <div class="sandbox-name"><a href="https://modal.com/">Modal</a> <span class="sandbox-iso iso-gvisor">gVisor</span></div>
-      <div class="sandbox-desc">gVisor-based sandboxes with integrated GPU support. Broader platform for inference, training, and batch. ~300ms startup.</div>
-    </div>
-    <div class="sandbox-card">
-      <div class="sandbox-name"><a href="https://docs.docker.com/ai/sandboxes/">Docker Sandboxes</a> <span class="sandbox-iso iso-docker">MicroVM</span></div>
-      <div class="sandbox-desc">Jan 2026 (Docker Desktop 4.58). Each agent gets a microVM via native hypervisor (virtualization.framework on macOS, Hyper-V on Windows) with its own private Docker daemon. Claude Code, Codex, Copilot, Gemini, Kiro. Network-isolated.</div>
+      <div class="sandbox-name"><a href="https://slicervm.com/">SlicerVM</a> <span class="sandbox-iso iso-firecracker">Firecracker</span> <span class="sandbox-iso iso-ch">CH</span></div>
+      <div class="sandbox-desc">Self-hosted microVM platform by the OpenFaaS/Actuated team. Firecracker + Cloud Hypervisor on Linux, Apple Virtualization Framework on Mac. Flat-rate, no SaaS, runs on your own hardware.</div>
     </div>
     <div class="sandbox-card">
       <div class="sandbox-name"><a href="https://aws.amazon.com/bedrock/agentcore/">AWS Bedrock AgentCore</a> <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
       <div class="sandbox-desc">One session, one microVM. Up to 8 hours. Destroyed and sanitized after use. Integrated with Bedrock AI services.</div>
     </div>
     <div class="sandbox-card">
-      <div class="sandbox-name"><a href="https://github.com/zerocore-ai/microsandbox">Microsandbox</a> <span class="sandbox-iso iso-ch">libkrun</span></div>
-      <div class="sandbox-desc">Open-source, self-hosted, Apache-2.0. YC-backed. ~4,700 GitHub stars. Uses libkrun (Red Hat's library-based VMM).</div>
+      <div class="sandbox-name"><a href="https://e2b.dev/">E2B</a> <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
+      <div class="sandbox-desc">Purpose-built Firecracker sandboxes for AI agents, ~150ms boot. Claims 88% of Fortune 100 signed up.</div>
     </div>
     <div class="sandbox-card">
-      <div class="sandbox-name"><a href="https://workers.cloudflare.com/">Cloudflare Workers</a> <span class="sandbox-iso iso-v8">V8 isolate</span></div>
-      <div class="sandbox-desc">Not microVMs but V8 isolates. Sub-millisecond startup. Dynamic Workers spawn code from LLMs at runtime. JS/Wasm only.</div>
-    </div>
-    <div class="sandbox-card">
-      <div class="sandbox-name"><a href="https://ona.com/">Ona</a> (ex-Gitpod) <span class="sandbox-iso iso-ch">VM</span></div>
-      <div class="sandbox-desc">Gitpod rebranded (Sep 2025) into an AI agent platform. Each agent gets an ephemeral VM with kernel-level isolation. SOC 2, GDPR. Serves major financial and pharmaceutical enterprises.</div>
+      <div class="sandbox-name"><a href="https://vercel.com/docs/vercel-sandbox">Vercel Sandbox</a> <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
+      <div class="sandbox-desc">Firecracker microVMs on Amazon Linux 2023. Millisecond boot. Snapshots for instant resume. Node.js and Python runtimes. SDK and CLI. Built for AI code interpreters and untrusted code execution.</div>
     </div>
     <div class="sandbox-card">
       <div class="sandbox-name"><a href="https://github.com/jingkaihe/matchlock">Matchlock</a> <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
       <div class="sandbox-desc">Open-source. Firecracker microVMs for AI agents with deny-all networking, domain allowlisting, and secret protection. Built for running <code>claude --dangerously-skip-permissions</code> safely.</div>
     </div>
+  </div>
+  <div style="font-size:0.75rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-top:1rem; margin-bottom:0.4rem;">Other microVM / VM</div>
+  <div class="sandbox-grid">
     <div class="sandbox-card">
-      <div class="sandbox-name"><a href="https://www.daytona.io/">Daytona</a> <span class="sandbox-iso iso-docker">Docker</span></div>
-      <div class="sandbox-desc">Pivoted from dev environments to agent infrastructure in 2025. &lt;90ms cold starts. Weakest isolation but fastest boot.</div>
+      <div class="sandbox-name"><a href="https://docs.docker.com/ai/sandboxes/">Docker Sandboxes</a> <span class="sandbox-iso iso-ch">MicroVM</span></div>
+      <div class="sandbox-desc">Jan 2026 (Docker Desktop 4.58). Each agent gets a microVM via native hypervisor (virtualization.framework on macOS, Hyper-V on Windows) with its own private Docker daemon. Claude Code, Codex, Copilot, Gemini, Kiro. Network-isolated.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name"><a href="https://ona.com/">Ona</a> (ex-Gitpod) <span class="sandbox-iso iso-ch">VM</span></div>
+      <div class="sandbox-desc">Gitpod rebranded (Sep 2025) into an AI agent platform. Each agent gets an ephemeral VM with kernel-level isolation and syscall monitoring. VMM undisclosed. SOC 2, GDPR. Runs in customer VPCs on AWS, GCP, and Azure.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name"><a href="https://www.daytona.io/">Daytona</a> <span class="sandbox-iso iso-ch">MicroVM</span></div>
+      <div class="sandbox-desc">Pivoted from dev environments to agent infrastructure in 2025. Each sandbox gets a dedicated kernel, filesystem, and network stack. &lt;90ms cold starts. VMM undisclosed.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name"><a href="https://github.com/zerocore-ai/microsandbox">Microsandbox</a> <span class="sandbox-iso iso-ch">libkrun</span></div>
+      <div class="sandbox-desc">Open-source, self-hosted, Apache-2.0. YC-backed. ~4,700 GitHub stars. Uses libkrun (Red Hat's library-based VMM).</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name"><a href="https://northflank.com/product/sandboxes">Northflank</a> <span class="sandbox-iso iso-firecracker">Firecracker</span> <span class="sandbox-iso iso-gvisor">gVisor</span> <span class="sandbox-iso iso-ch">Kata</span></div>
+      <div class="sandbox-desc">Multi-runtime platform: Firecracker, gVisor, Kata Containers, and Cloud Hypervisor. Pick your isolation backend. 2M+ microVMs/month. Managed or bring-your-own-cloud. Customers include Writer and Sentry.</div>
+    </div>
+  </div>
+  <div style="font-size:0.75rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-top:1rem; margin-bottom:0.4rem;">Non-VM isolation</div>
+  <div class="sandbox-grid">
+    <div class="sandbox-card">
+      <div class="sandbox-name"><a href="https://modal.com/">Modal</a> <span class="sandbox-iso iso-gvisor">gVisor</span></div>
+      <div class="sandbox-desc">gVisor-based sandboxes with integrated GPU support. Broader platform for inference, training, and batch. ~300ms startup.</div>
+    </div>
+    <div class="sandbox-card">
+      <div class="sandbox-name"><a href="https://workers.cloudflare.com/">Cloudflare</a> <span class="sandbox-iso iso-v8">V8 isolate</span></div>
+      <div class="sandbox-desc">Sub-millisecond startup, <a href="https://blog.cloudflare.com/dynamic-workers">Dynamic Workers</a> let LLMs spawn JS/TS into child isolates at runtime (cut token usage 81% vs tool-calling). Separate <a href="https://developers.cloudflare.com/containers/">Containers</a> product (beta) adds full Linux runtimes for any language.</div>
     </div>
   </div>
 </div>
@@ -1228,7 +1282,7 @@
   <div class="sandbox-grid">
     <div class="sandbox-card" style="grid-column: span 2;">
       <div class="sandbox-name" style="font-size:1rem;"><a href="https://katacontainers.io/">Kata Containers</a> <span class="sandbox-iso iso-firecracker" style="background:var(--bg-surface);">OCI runtime</span></div>
-      <div class="sandbox-desc">The OG. OpenInfra Foundation project that wraps QEMU, Cloud Hypervisor, or Firecracker behind an OCI-compatible runtime. Drop it into containerd, every pod gets its own VM. <strong>150-300ms</strong> startup overhead. Battle-tested by IBM Cloud; <a href="https://aws.amazon.com/blogs/containers/enhancing-kubernetes-workload-isolation-and-security-using-kata-containers/">deployable on AWS EKS</a> with bare-metal nodes. The most mature option, but operational complexity is real: you're managing guest kernels, VM images, and an additional runtime shim alongside your existing container stack.</div>
+      <div class="sandbox-desc">OpenInfra Foundation project that wraps QEMU, Cloud Hypervisor, or Firecracker behind an OCI-compatible runtime. Drop it into containerd, every pod gets its own VM. <strong>150-300ms</strong> startup overhead. Battle-tested by IBM Cloud; <a href="https://aws.amazon.com/blogs/containers/enhancing-kubernetes-workload-isolation-and-security-using-kata-containers/">deployable on AWS EKS</a> with bare-metal nodes. The most mature option, but operational complexity is real: you're managing guest kernels, VM images, and an additional runtime shim alongside your existing container stack.</div>
     </div>
     <div class="sandbox-card">
       <div class="sandbox-name" style="font-size:1rem;"><a href="https://edera.dev/">Edera</a> <span class="sandbox-iso iso-ch" style="background:var(--bg-surface);">Type-1 hypervisor</span></div>
@@ -1245,7 +1299,7 @@
 
 <p>Any honest discussion of isolation in 2026 has to take <a href="https://gvisor.dev/">gVisor</a> seriously. It's not a microVM; it's a user-space application kernel written in Go that intercepts syscalls and re-implements them in a memory-safe process. No hypervisor, no guest kernel. But dismissing it as "weaker isolation" misses the picture.</p>
 
-<p>Google runs billions of containers on gVisor across Cloud Run, App Engine, and Cloud Functions. <a href="https://modal.com/">Modal</a> built their entire GPU inference platform on it. <a href="https://www.digitalocean.com/">DigitalOcean</a> upgraded their App Platform's gVisor deployment to the new <code>systrap</code> mode and saw 2x throughput on Node.js, 7x on WordPress. The <code>systrap</code> mode (which replaced ptrace) drastically reduced overhead, and gVisor reimplements ~274 Linux syscalls in Go, but the Sentry itself only makes ~70 host syscalls, a dramatically smaller surface than the kernel's 450+.</p>
+<p>Google runs billions of containers on gVisor across Cloud Run, App Engine, and Cloud Functions. <a href="https://modal.com/">Modal</a> built their entire GPU inference platform on it. <a href="https://www.digitalocean.com/">DigitalOcean</a> upgraded their App Platform's gVisor deployment to the new <code>systrap</code> mode and saw 2x throughput on Node.js, 7x on WordPress. The <code>systrap</code> mode (which replaced ptrace) drastically reduced overhead, and gVisor reimplements ~274 Linux syscalls in Go, but the Sentry itself only makes <a href="https://www.luiscardoso.dev/blog/sandboxes-for-ai">53 host syscalls without networking, 68 with</a>, a dramatically smaller surface than the kernel's 450+.</p>
 
 <p>The strongest case for gVisor over microVMs is <strong>GPU workloads</strong>. VFIO GPU passthrough into a microVM breaks the VM isolation boundary anyway, as the GPU has DMA access to host memory. gVisor's <code>nvproxy</code> intercepts CUDA calls in a memory-safe layer, which arguably gives you better security than a microVM with a passed-through GPU. This is exactly why <a href="https://modal.com/">Modal</a> uses gVisor for GPU inference.</p>
 
@@ -1314,14 +1368,61 @@
 
 
 <div class="footnote">
-  <p><strong>Further reading:</strong></p>
-  <p><strong>VMMs and runtimes:</strong> <a href="https://firecracker-microvm.github.io/">Firecracker</a> (<a href="https://aws.amazon.com/blogs/aws/firecracker-lightweight-virtualization-for-serverless-computing/">Jeff Barr's launch post</a>) &bull; <a href="https://www.cloudhypervisor.org/">Cloud Hypervisor</a> (<a href="https://www.cloudhypervisor.org/blog/cloud-hypervisor-v51.0-released/">v51.0 release</a>) &bull; <a href="https://github.com/rust-vmm">rust-vmm</a> &bull; <a href="https://www.qemu.org/docs/master/system/i386/microvm.html">QEMU microvm</a> &bull; <a href="https://github.com/containers/libkrun">libkrun</a> &bull; <a href="https://katacontainers.io/">Kata Containers</a> &bull; <a href="https://edera.dev/">Edera</a> &bull; <a href="https://lima-vm.io/">Lima</a> &bull; <a href="https://tart.run/">Tart</a></p>
-  <p><strong>AI sandboxes:</strong> <a href="https://sprites.dev/">Sprites.dev</a> &bull; <a href="https://e2b.dev/">E2B</a> &bull; <a href="https://github.com/zerocore-ai/microsandbox">Microsandbox</a> &bull; <a href="https://github.com/jingkaihe/matchlock">Matchlock</a> &bull; <a href="https://ona.com/">Ona</a> &bull; <a href="https://docs.docker.com/ai/sandboxes/">Docker Sandboxes</a></p>
-  <p><strong>Curated lists:</strong> <a href="https://github.com/infracloudio/awesome-microvm">awesome-microvm</a> &bull; <a href="https://github.com/iximiuz/awesome-container-tinkering">Container Runtimes and Related Tools (iximiuz)</a></p>
-  <p><strong>Jessie Frazelle (2018, ahead of her time):</strong> <a href="https://blog.jessfraz.com/post/containers-zones-jails-vms/">Setting the Record Straight: containers vs. Zones vs. Jails vs. VMs</a> &bull; <a href="https://blog.jessfraz.com/post/hard-multi-tenancy-in-kubernetes/">Hard Multi-Tenancy in Kubernetes</a> &bull; <a href="https://blog.jessfraz.com/post/getting-towards-real-sandbox-containers/">Getting Towards Real Sandbox Containers</a> &bull; <a href="https://blog.jessfraz.com/post/containers-security-and-echo-chambers/">Containers, Security, and Echo Chambers</a></p>
-  <p><strong>Deep dives:</strong> <a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a> &bull; <a href="https://www.usenix.org/publications/loginonline/freebsd-firecracker">FreeBSD on Firecracker (Colin Percival)</a> &bull; <a href="https://ona.com/blog/how-claude-code-escapes-its-own-denylist-and-sandbox">How Claude Code escapes its own sandbox (Ona/Veto)</a> &bull; <a href="https://blog.alexellis.io/how-to-run-firecracker-without-kvm-on-regular-cloud-vms/">Firecracker without KVM via PVM (Alex Ellis)</a> &bull; <a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Firecracker on OCI: VM vs bare metal (Oracle)</a> &bull; <a href="https://code.claude.com/docs/en/sandboxing">Claude Code sandboxing docs</a> &bull; <a href="https://www.anthropic.com/engineering/claude-code-sandboxing">Anthropic: Beyond permission prompts</a></p>
-  <p style="margin-top:1rem;"><em>Line counts verified with <code>cloc</code> on fresh git clones (March 2026), because why not. All CVEs linked to their NVD or advisory pages. Performance claims sourced from the <a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a> and <a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Oracle's OCI benchmarks</a>. On newer hardware it's even faster.</em></p>
+  <h3 style="font-size:1rem; margin-bottom:1rem;">Further reading</h3>
+  <strong>VMMs and runtimes:</strong>
+  <ul style="margin-top:0.25rem; margin-bottom:1rem;">
+    <li><a href="https://firecracker-microvm.github.io/">Firecracker</a> (<a href="https://aws.amazon.com/blogs/aws/firecracker-lightweight-virtualization-for-serverless-computing/">Jeff Barr's launch post</a>)</li>
+    <li><a href="https://www.cloudhypervisor.org/">Cloud Hypervisor</a></li>
+    <li><a href="https://github.com/rust-vmm">rust-vmm</a></li>
+    <li><a href="https://www.qemu.org/docs/master/system/i386/microvm.html">QEMU microvm</a></li>
+    <li><a href="https://github.com/containers/libkrun">libkrun</a></li>
+    <li><a href="https://katacontainers.io/">Kata Containers</a></li>
+    <li><a href="https://edera.dev/">Edera</a></li>
+    <li><a href="https://lima-vm.io/">Lima</a></li>
+    <li><a href="https://tart.run/">Tart</a></li>
+  </ul>
+  <strong>AI sandboxes:</strong>
+  <ul style="margin-top:0.25rem; margin-bottom:1rem;">
+    <li><a href="https://sprites.dev/">Sprites.dev</a></li>
+    <li><a href="https://e2b.dev/">E2B</a></li>
+    <li><a href="https://slicervm.com/">SlicerVM</a></li>
+    <li><a href="https://github.com/zerocore-ai/microsandbox">Microsandbox</a></li>
+    <li><a href="https://github.com/jingkaihe/matchlock">Matchlock</a></li>
+    <li><a href="https://ona.com/">Ona</a></li>
+    <li><a href="https://docs.docker.com/ai/sandboxes/">Docker Sandboxes</a></li>
+    <li><a href="https://vercel.com/docs/vercel-sandbox">Vercel Sandbox</a></li>
+    <li><a href="https://northflank.com/product/sandboxes">Northflank</a></li>
+  </ul>
+  <strong>Curated lists:</strong>
+  <ul style="margin-top:0.25rem; margin-bottom:1rem;">
+    <li><a href="https://github.com/infracloudio/awesome-microvm">awesome-microvm</a></li>
+    <li><a href="https://github.com/iximiuz/awesome-container-tinkering">Container Runtimes and Related Tools (iximiuz/Ivan Velichko)</a></li>
+  </ul>
+  <strong>Jessie Frazelle (2018, ahead of her time):</strong>
+  <ul style="margin-top:0.25rem; margin-bottom:1rem;">
+    <li><a href="https://blog.jessfraz.com/post/containers-zones-jails-vms/">Setting the Record Straight: containers vs. Zones vs. Jails vs. VMs</a></li>
+    <li><a href="https://blog.jessfraz.com/post/hard-multi-tenancy-in-kubernetes/">Hard Multi-Tenancy in Kubernetes</a></li>
+    <li><a href="https://blog.jessfraz.com/post/getting-towards-real-sandbox-containers/">Getting Towards Real Sandbox Containers</a></li>
+    <li><a href="https://blog.jessfraz.com/post/containers-security-and-echo-chambers/">Containers, Security, and Echo Chambers</a></li>
+  </ul>
+  <strong>Deep dives:</strong>
+  <ul style="margin-top:0.25rem; margin-bottom:1rem;">
+    <li><a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a></li>
+    <li><a href="https://brooker.co.za/blog/2025/09/18/firecracker.html">Seven Years of Firecracker (Marc Brooker)</a></li>
+    <li><a href="https://www.usenix.org/publications/loginonline/freebsd-firecracker">FreeBSD on Firecracker (Colin Percival)</a></li>
+
+    <li><a href="https://blog.alexellis.io/how-to-run-firecracker-without-kvm-on-regular-cloud-vms/">Firecracker without KVM via PVM (Alex Ellis)</a></li>
+    <li><a href="https://slicervm.com/blog/microvms-sandboxes-in-300ms/">MicroVMs &amp; sandboxes in 300ms (SlicerVM)</a></li>
+    <li><a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Firecracker on OCI: VM vs bare metal (Oracle)</a></li>
+    <li><a href="https://code.claude.com/docs/en/sandboxing">Claude Code sandboxing docs</a></li>
+    <li><a href="https://www.anthropic.com/engineering/claude-code-sandboxing">Anthropic: Beyond permission prompts</a></li>
+        <li><a href="https://ona.com/blog/how-claude-code-escapes-its-own-denylist-and-sandbox">How Claude Code escapes its own sandbox (Ona/Veto)</a></li>
+    <li><a href="https://www.luiscardoso.dev/blog/sandboxes-for-ai">A field guide to sandboxes for AI (Luis Cardoso, Jan 2026)</a> — excellent, recommended read</li>
+  </ul>
+  <p style="margin-top:1rem;"><em>Line counts verified with <code>cloc</code> on fresh git clones (March 2026), because why not. All CVEs linked to their NVD or advisory pages. Performance claims sourced from the <a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a> and <a href="https://blogs.oracle.com/cloud-infrastructure/firecracker-oci-vm-vs-bm">Oracle's OCI benchmarks</a>. On newer hardware it's even faster - <200ms.</em></p>
 </div>
+
+</article>
 
 <footer>
   &copy; 2026 Emir Beganovi&#263;
@@ -1508,14 +1609,14 @@ const historyData = [
   { year: '1999', name: 'Jails', color: 'var(--text-muted)', info: '<strong>FreeBSD Jails (1999)</strong> — First real attempt at OS-level virtualization. Isolated filesystem, process table, and networking. Still shared the kernel, but far more complete than chroot. Influenced everything that followed.' },
   { year: '2004', name: 'Zones', color: 'var(--text-muted)', info: '<strong>Solaris Containers/Zones (2004)</strong> — Sun\'s take on OS virtualization. Resource controls, isolated networking, and a proper security boundary within a single Solaris kernel. Elegant but tied to a dying OS.' },
   { year: '2005', name: 'OpenVZ', color: 'var(--text-muted)', info: '<strong>OpenVZ (2005)</strong> — Linux container virtualization via a patched kernel. Popular with hosting providers for VPS. Required kernel patches that were never merged upstream, which limited adoption.' },
-  { year: '2006', name: 'cgroups', color: 'var(--orange)', info: '<strong>cgroups (2006)</strong> — Google engineers (Paul Menage, Rohit Seth) contributed "process containers" to the Linux kernel. Renamed to cgroups. Finally: kernel-native resource limiting for CPU, memory, I/O. The foundation that Docker would later build on.' },
-  { year: '2008', name: 'LXC', color: 'var(--orange)', info: '<strong>LXC (2008)</strong> — First complete Linux container implementation using namespaces + cgroups. No kernel patches needed. Docker originally used LXC as its execution backend before replacing it with libcontainer.' },
-  { year: '2013', name: 'Docker', color: 'var(--accent)', info: '<strong>Docker (2013)</strong> — Solomon Hykes demos Docker at PyCon. The killer innovation wasn\'t isolation—it was the <em>developer experience</em>: Dockerfile, image layers, Docker Hub, and a CLI that made containers accessible. Docker made containers mainstream, but it also created the misconception that containers = security.' },
-  { year: '2015', name: 'runc/OCI', color: 'var(--accent)', info: '<strong>runc + OCI (2015)</strong> — Docker extracts its container runtime into runc and co-founds the Open Container Initiative. Standardizes the image and runtime specs. Kubernetes, Podman, and others can now use the same container format without Docker.' },
-  { year: '2018', name: 'FC', color: 'var(--green)', info: '<strong>Firecracker (2018)</strong> — AWS open-sources the VMM powering Lambda. ~83K lines of Rust, <5 MiB overhead, ~125ms boot. The inflection point: for the first time, per-workload VMs are practical at scale. <em>The isolation is no longer a software convention—it\'s enforced by hardware.</em>' },
-  { year: '2018', name: 'gVisor', color: 'var(--green)', info: '<strong>gVisor (2018)</strong> — Google open-sources a user-space application kernel. Intercepts syscalls in a memory-safe Go process instead of passing them to the shared kernel. A middle ground: better isolation than containers, less overhead than VMs.' },
-  { year: '2019', name: 'CH', color: 'var(--green)', info: '<strong>Cloud Hypervisor (2019)</strong> — Intel starts a new rust-vmm-based VMM for general-purpose cloud workloads. Adds nested virtualization, GPU passthrough, hotplugging. Now maintained by Intel, Microsoft, Cyberus, and Tencent.' },
-  { year: '2025', name: 'AI', color: 'var(--pink)', info: '<strong>AI Agent Sandboxes (2025-2026)</strong> — E2B, Fly.io Sprites, Docker Sandboxes, AWS Bedrock AgentCore, Microsandbox. Nearly every major platform ships microVM-based isolation for AI coding agents. The use case that makes the whole industry care about workload isolation.' },
+  { year: '2006', name: 'cgroups', color: 'var(--orange)', info: '<strong>cgroups (2006)</strong> — Rohit Seth at Google <a href="https://lkml.org/lkml/2006/9/15/4">posts the original "containers" patch</a> to LKML (Sep 2006). Paul Menage (also Google) evolves it into what ships as "cgroups" (renamed to avoid confusion with OS-level containers). Finally: kernel-native resource limiting for CPU, memory, I/O. Hierarchical groups of processes with pluggable controllers. The foundation that LXC and Docker would later build on.' },
+  { year: '2008', name: 'LXC', color: 'var(--orange)', info: '<strong>LXC (2008)</strong> — Daniel Lezcano at IBM creates the Linux Resource Containers project, the first container implementation designed to push everything into the mainline kernel. Built on namespaces + cgroups. Unlike OpenVZ and Linux-VServer, no permanent out-of-tree patches. Docker used LXC as its execution backend until replacing it with libcontainer in 2014.' },
+  { year: '2013', name: 'Docker', color: 'var(--accent)', info: '<strong>Docker (2013)</strong> — Solomon Hykes gives a <a href="https://www.youtube.com/watch?v=9xciauwbsuo">5-minute lightning talk</a> at PyCon Santa Clara: "this is the first time we show anything outside the dotCloud office." dotCloud\'s internal container engine, built on LXC and AUFS, refactored and open-sourced. The killer innovation wasn\'t isolation — it was the <em>developer experience</em>: Dockerfile, image layers, and a CLI that made containers accessible. dotCloud renamed to Docker Inc. in 2013, sold the PaaS in 2014.' },
+  { year: '2015', name: 'runc/OCI', color: 'var(--accent)', info: '<strong>runc + OCI (2015)</strong> — Docker extracts libcontainer into <a href="https://www.docker.com/blog/runc/">runc</a> (announced by Solomon Hykes at DockerCon 2015) and co-founds the Open Container Initiative with CoreOS, Google, and others. Killed AppC momentum overnight. Standardized image and runtime specs meant Kubernetes, Podman, and containerd could use the same container format without Docker.' },
+  { year: '2018', name: 'FC', color: 'var(--green)', info: '<strong>Firecracker (2018)</strong> — AWS open-sources the VMM powering Lambda. Started from Google\'s crosvm, rewritten by Anthony Liguori (former QEMU project lead). ~83K lines of Rust, <5 MiB overhead, ~125ms boot. Deliberately minimal: no BIOS, no legacy devices, no PCI passthrough. <em>The isolation is no longer a software convention — it\'s enforced by hardware.</em>' },
+  { year: '2018', name: 'gVisor', color: 'var(--green)', info: '<strong>gVisor (2018)</strong> — Google open-sources a user-space application kernel already battle-tested in production for years. Intercepts syscalls in a memory-safe Go process (the Sentry) instead of passing them to the shared kernel. File access mediated by a separate Gofer process via 9P. ptrace and KVM backends from day one. A middle ground: better isolation than containers, less overhead than VMs.' },
+  { year: '2019', name: 'CH', color: 'var(--green)', info: '<strong>Cloud Hypervisor (2019)</strong> — Intel\'s Open Source Technology Center (Rob Bradford, Sebastien Boeuf) first built NEMU (2018), a stripped-down QEMU fork. Then pivoted to a clean-sheet Rust rewrite on rust-vmm. Adds nested virtualization, GPU passthrough, hotplugging. Now maintained by Intel, Microsoft, Cyberus, and Tencent.' },
+  { year: '2025', name: 'AI', color: 'var(--pink)', info: '<strong>AI Agent Sandboxes (2025-2026)</strong> — E2B, Fly.io Sprites, SlicerVM, Docker Sandboxes, AWS Bedrock AgentCore, Vercel Sandbox, Microsandbox, Matchlock, Northflank, Ona, Daytona. Nearly every major platform ships microVM-based isolation for AI coding agents. The use case that makes the whole industry care about workload isolation.' },
 ];
 
 // Build horizontal timeline
