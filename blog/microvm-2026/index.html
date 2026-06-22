@@ -1167,7 +1167,7 @@
 
 <h2>Performance: Boot Time and Runtime Overhead</h2>
 
-<p>The most common objection to microVMs is latency. "A whole VM per request? That'll add minutes." It turns out it doesn't at all. That's why I added this fancy dry-run vanilla HTML/CSS/JS demo below (from a real Cloud Hypervisor microVM). The <a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a> measured <span class="num">&lt;125ms</span> to boot a Linux kernel and start accepting API calls. With snapshot-restore, you can get to <span class="num">~28ms</span>. AWS Lambda uses this for SnapStart: they freeze the VM after initialization, then restore the snapshot on cold start. Colin Percival has gotten <a href="https://www.usenix.org/publications/loginonline/freebsd-firecracker">FreeBSD booting on Firecracker in under 20ms</a> with kernel patches (the kernel boots faster than a TCP handshake!). I myself stripped a minimal Linux 6.18 kernel to ~30 MB with minimal drivers required to run Docker-in-Cloud Hypervisor correctly, and on modern hardware it boots in 200ms. <br>For comparison: Kubernetes pod scheduling typically takes <span class="num-bad">3-15 seconds</span>. A traditional VM boot is <span class="num-bad">30-60 seconds</span>. A microVM boot is not the bottleneck.</p>
+<p>The most common objection to microVMs is latency. "A whole VM per request? That'll add minutes." It turns out it doesn't at all. That's why I added this fancy dry-run vanilla HTML/CSS/JS demo below (from a real Cloud Hypervisor microVM). The <a href="https://www.usenix.org/conference/nsdi20/presentation/agache">Firecracker NSDI'20 paper</a> measured <span class="num">&lt;125ms</span> to boot a Linux kernel and start accepting API calls. With snapshot-restore, you can get to <span class="num">~28ms</span>. AWS Lambda uses this for SnapStart: they freeze the VM after initialization, then restore the snapshot on cold start. <br><br>Colin Percival has gotten <a href="https://www.usenix.org/publications/loginonline/freebsd-firecracker">FreeBSD booting on Firecracker in under 20ms</a> with kernel patches (the kernel boots faster than a TCP handshake!). <a href="https://unikraft.com/">Unikraft Cloud</a> can even boot full microVMs in under <span class="num">10ms</span>, and to do so at scale (thousands of VMs per server) thanks to a heavily modified firecracker VMM and an extensive snapshotting sub-system.<br><br> I myself stripped a minimal Linux 6.18 kernel to ~30 MB with minimal drivers required to run Docker-in-Cloud Hypervisor correctly, and on modern hardware it boots in under 200ms. <br>For comparison: Kubernetes pod scheduling typically takes <span class="num-bad">3-15 seconds</span>. A traditional VM boot is <span class="num-bad">30-60 seconds</span>. A microVM boot is not the bottleneck.</p>
 
 <!-- INTERACTIVE: Boot Terminal Demo -->
 <div class="interactive" id="boot-demo">
@@ -1237,7 +1237,7 @@
   </div>
 </div>
 
-<p>This is the model that <a href="https://sprites.dev/">Fly.io Sprites</a>, <a href="https://e2b.dev/">E2B</a>, AWS Lambda, and Kata Containers more or less converge on. The details differ: Firecracker vs. Cloud Hypervisor, ephemeral vs. persistent, containers vs. direct processes...but the architecture is the same: <strong>the VM</strong> is the <strong>security boundary</strong>, not the container.</p>
+<p>This is the model that <a href="https://sprites.dev/">Fly.io Sprites</a>, <a href="https://e2b.dev/">E2B</a>, <a href="https://unikraft.com/">Unikraft</a>, AWS Lambda, and Kata Containers more or less converge on. The details differ: Firecracker vs. Cloud Hypervisor, ephemeral vs. persistent, containers vs. direct processes...but the architecture is the same: <strong>the VM</strong> is the <strong>security boundary</strong>, not the container.</p>
 
 <h2 id="ai-agents">AI Agents Made Everyone Care</h2>
 
@@ -1258,6 +1258,10 @@
   <div class="interactive-title">The AI Sandbox Ecosystem (2026)</div>
   <div style="font-size:0.75rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-top:1rem; margin-bottom:0.4rem;">Firecracker-based</div>
   <div class="sandbox-grid">
+    <div class="sandbox-card">
+      <div class="sandbox-name"><a href="https://unikraft.com/">Unikraft Cloud</a> <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
+      <div class="sandbox-desc">Heavily modified and extended Firecracker VMM (led by a PhD founder), with sub-10ms cold starts (fastest here) and sub-10ms scale-to-zero. Any Dockerfile to microVM, with millisecond snapshot/fork and 100,000+ isolated instances per server; hosted, BYOC, or on-prem.</div>
+    </div>
     <div class="sandbox-card">
       <div class="sandbox-name"><a href="https://sprites.dev/">Fly.io Sprites</a> <span class="sandbox-iso iso-firecracker">Firecracker</span></div>
       <div class="sandbox-desc">Persistent, stateful VMs. Checkpoint/restore in ~300ms. Pre-installed with Claude Code, Codex CLI. The "developer workstation as a VM" model.</div>
@@ -1342,7 +1346,7 @@
     </div>
   </div>
 </div>
-
+<p>In addition, Unikraft provides a commercial solution based on a virtual kubelet (<a href="https://unikraft.com/docs/integrations/kubernetes">Kraftlet</a>) that allows for transparently running pods (read: containers) as VMs. (very elegant solution IMO!)</p>
 <h3>The gVisor Question</h3>
 
 <p>Any honest discussion of isolation in 2026 has to take <a href="https://gvisor.dev/">gVisor</a> seriously. It's not a microVM; it's a user-space application kernel written in Go that intercepts syscalls and re-implements them in a memory-safe process. No hypervisor, no guest kernel. But dismissing it as "weaker isolation" misses the picture.</p>
@@ -1370,7 +1374,7 @@
 
 <p><strong><a href="https://www.ubicloud.com/">Ubicloud</a></strong> is quietly proving the model works for CI, and for building an entire open-source cloud. Their architecture is instructive: a Ruby/Postgres control plane communicates with bare-metal Linux+KVM servers via SSH, where <a href="https://www.ubicloud.com/blog/cloud-virtualization-red-hat-aws-firecracker-and-ubicloud-internals">Cloud Hypervisor runs each VM inside Linux namespaces</a> for additional isolation. They offer GitHub Actions runners at 10x cheaper than GitHub's pricing, with each job getting a clean, ephemeral VM on bare-metal providers. Open source under AGPL.</p>
 
-<p><strong><a href="https://aws.amazon.com/about-aws/whats-new/2026/02/amazon-ec2-nested-virtualization-on-virtual/">AWS added nested virtualization</a></strong> on standard EC2 instances (C8i/M8i/R8i) in February 2026. Previously you needed expensive bare-metal instances to run KVM inside EC2. Now a $0.86/hr c8i.4xlarge in Frankfurt can run Cloud Hypervisor with nested VMs. This unlocks microVM-based CI/CD on AWS without the $9-20/hr bare-metal tax.</p>
+<p><strong><a href="https://aws.amazon.com/about-aws/whats-new/2026/02/amazon-ec2-nested-virtualization-on-virtual/">AWS added nested virtualization</a></strong> on standard EC2 instances (C8i/M8i/R8i) in February 2026. Previously you needed expensive bare-metal instances to run KVM inside EC2. Now a $0.72/hr c8i.4xlarge in Frankfurt can run Cloud Hypervisor with nested VMs. This unlocks microVM-based CI/CD on AWS without the $9-20/hr bare-metal tax.</p>
 
 <p><strong>crosvm</strong>, Google's VMM for Chrome OS, remains actively maintained and powers Linux (Crostini) and Android VMs on every Chromebook. Another rust-vmm consumer, another proof point for the shared ecosystem.</p>
 
@@ -1549,7 +1553,7 @@ const vmms = [
     loc: '83K',
     nested: 'No',
     detail: 'AWS\'s purpose-built VMM for serverless. Deliberately minimal: 5 emulated devices, no BIOS, no PCI bus. The Jailer companion process applies seccomp-bpf, cgroups, and chroot to the VMM itself. Snapshot-restore achieves ~28ms warm starts.',
-    users: 'AWS Lambda, Fly.io, E2B, AWS Bedrock AgentCore, Aurora DSQL (<a href="https://justingarrison.com/blog/2024-02-08-fargate-is-not-firecracker/">Fargate\'s use is disputed</a>)'
+    users: 'AWS Lambda, Fly.io, E2B, Unikraft, AWS Bedrock AgentCore, Aurora DSQL (<a href="https://justingarrison.com/blog/2024-02-08-fargate-is-not-firecracker/">Fargate\'s use is disputed</a>)'
   },
   {
     name: '<a href="https://www.cloudhypervisor.org/">Cloud Hypervisor</a>',
