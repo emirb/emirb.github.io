@@ -1,7 +1,3 @@
-Staff SRE at Booking.com, working on CI, Developer Experience and Platform Engineering. Founder of [Isorun](https://isorun.ai/), a hardware-isolated microVM runtime for AI agents. Mostly interested in build systems, CI at scale and agentic sandboxes. Based in Amsterdam.
-
-[GitHub](https://github.com/emirb) · [LinkedIn](https://www.linkedin.com/in/beganovicemir/) · [Isorun](https://isorun.ai/)
-
 ## Projects
 
 - **[Isorun](https://isorun.ai/)** — Sandboxes in milliseconds. Fully isolated Linux microVMs from any Docker image, with fork, hibernate/resume, snapshot/restore, public URLs and per-second billing. Launched June 2026. [Docs](https://docs.isorun.ai/) · [TypeScript SDK](https://github.com/isorun/sdk)
