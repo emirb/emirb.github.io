@@ -1,5 +1,3 @@
-# Emir Beganović
-
 Staff SRE at Booking.com, working on CI, Developer Experience and Platform Engineering. Founder of [Isorun](https://isorun.ai/), a hardware-isolated microVM runtime for AI agents. Mostly interested in build systems, CI at scale and agentic sandboxes. Based in Amsterdam.
 
 [GitHub](https://github.com/emirb) · [LinkedIn](https://www.linkedin.com/in/beganovicemir/) · [Isorun](https://isorun.ai/)
