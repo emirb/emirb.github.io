@@ -26,4 +26,4 @@
 - April 2019, RIPE SEE 8: [Importance of Local Content](https://www.youtube.com/watch?v=bPAJffkUyVE) (video)
 - April 2018, ViennaPHP: [Profiling and inspection with Blackfire](ViennaPHP/profiling-inspection-blackfire-2018-04.pdf) (slides)
 - November 2017, ViennaPHP: [Static code analysis in PHP](ViennaPHP/static-code-analysis-2017-11.pdf) (slides)
-- September 2011, RIPE SEE 1: [Starting An Internet Exchange Point: Lessons learnt](https://meduza.carnet.hr/index.php/media/watch/6294) (video)
+- September 2011, RIPE SEE 1: [Starting An Internet Exchange Point: Lessons learnt](https://meduza.carnet.hr/index.php/media/watch/6294) (video, [slides](https://www.ripe.net/media/documents/Starting_an_IXP_-_Lessons_Learnt_-_Emir_Beganovic_Bosnia_and_Herzegovina.pdf))
